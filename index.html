@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="کافه">
+<meta name="theme-color" content="#0f1117">
+<title>حسابداری کافه</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;800&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Vazirmatn','Tahoma',sans-serif;background:#0f1117;color:#e8e0d0;min-height:100vh;direction:rtl;-webkit-tap-highlight-color:transparent;overflow-x:hidden;padding-top:max(0px,env(safe-area-inset-top));padding-bottom:max(0px,env(safe-area-inset-bottom))}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:#2a3040;border-radius:3px}
+.header{background:linear-gradient(135deg,#1a1f2e,#12161e);border-bottom:1px solid #2a3040;padding:12px 16px;padding-top:max(12px,calc(12px + env(safe-area-inset-top)));display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100}
+.header-logo{font-size:24px}
+.header-title{font-size:16px;font-weight:800;color:#f0c060}
+.header-sub{font-size:10px;color:#6b7a8d}
+.header-date{margin-right:auto;font-size:11px;color:#4a5568;background:#1e2533;padding:3px 10px;border-radius:20px}
+.tabs{display:flex;background:#12161e;border-bottom:1px solid #1e2533;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tab{background:transparent;border:none;border-bottom:2px solid transparent;color:#6b7a8d;padding:10px 14px;cursor:pointer;font-size:12px;font-family:inherit;white-space:nowrap;display:flex;align-items:center;gap:4px;flex-shrink:0;min-height:44px}
+.tab.active{border-bottom:2px solid #f0c060;color:#f0c060;background:#1e2c4022}
+.content{padding:14px;max-width:860px;margin:0 auto;padding-bottom:max(40px,calc(40px + env(safe-area-inset-bottom)))}
+.section{display:none}
+.section.active{display:block}
+.card{background:#12161e;border-radius:14px;padding:14px;border:1px solid #1e2533;margin-bottom:12px}
+.card-title{font-size:10px;font-weight:700;color:#8a9ab0;margin-bottom:10px;letter-spacing:.05em}
+input,select{background:#1a1f2e;border:1px solid #2a3040;border-radius:8px;padding:11px;color:#e8e0d0;font-size:13px;font-family:inherit;outline:none;direction:rtl;width:100%;transition:border .15s;min-height:44px}
+input:focus,select:focus{border-color:#f0c060}
+input::placeholder{color:#4a5568}
+label{display:block;font-size:11px;color:#6b7a8d;margin-bottom:4px}
+.btn{border:none;border-radius:8px;padding:11px 14px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;transition:opacity .15s;min-height:44px;min-width:44px}
+.btn:active{opacity:.8}
+.btn-gold{background:linear-gradient(135deg,#d4a017,#f0c060);color:#0f1117}
+.btn-green{background:#0d2b1a;border:1px solid #1a5c35;color:#4ade80}
+.btn-red{background:#2a1a1a;border:1px solid #4a2020;color:#f87171}
+.btn-blue{background:#1e2c40;border:1px solid #2a4060;color:#60a5fa}
+.btn-ghost{background:transparent;border:1px solid #2a3040;color:#6b7a8d}
+.btn-full{width:100%;padding:13px;font-size:14px}
+.btn-sm{padding:6px 10px;font-size:11px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+@media(max-width:520px){.g3{grid-template-columns:1fr 1fr}.g4{grid-template-columns:1fr 1fr}.tab{padding:10px 12px;font-size:11px}.btn-sm{padding:8px 12px;min-height:auto}}
+.stat-box{background:#0f1117;border-radius:10px;padding:10px 12px}
+.stat-label{font-size:10px;color:#6b7a8d;margin-bottom:3px}
+.stat-value{font-size:15px;font-weight:700}
+.inv-line{background:#1a1f2e;border-radius:10px;padding:10px;margin-bottom:8px;border:1px solid #2a3040}
+.inv-line-main{display:grid;grid-template-columns:1fr auto auto auto auto;gap:6px;align-items:end}
+.inv-line-info{display:flex;gap:10px;margin-top:7px;font-size:11px;flex-wrap:wrap}
+.ac-wrap{position:relative}
+.ac-list{position:absolute;top:calc(100% + 2px);right:0;left:0;z-index:300;background:#1e2533;border:1px solid #3a4050;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.7);overflow:hidden;max-height:220px;overflow-y:auto}
+.ac-item{padding:10px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid #1a1f2e;display:flex;justify-content:space-between;align-items:center}
+.ac-item:last-child{border-bottom:none}
+.ac-item:active,.ac-item:hover{background:#263040}
+.ac-badge{font-size:10px;background:#1a2533;color:#f0c060;padding:2px 7px;border-radius:10px}
+.list-item{background:#1a1f2e;border-radius:10px;padding:11px 12px;margin-bottom:8px;border:1px solid #2a3040;display:flex;align-items:center;gap:8px}
+.list-item-info{flex:1;min-width:0}
+.list-item-name{font-weight:600;margin-bottom:3px;font-size:13px}
+.list-item-meta{display:flex;flex-wrap:wrap;gap:7px;font-size:11px}
+.badge{padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700}
+.badge-green{background:#0d2b1a;color:#4ade80}
+.badge-yellow{background:#2b2200;color:#f0c060}
+.badge-orange{background:#2b1a0d;color:#fb923c}
+.badge-red{background:#2a1a1a;color:#f87171}
+.type-tag{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600}
+.type-drink{background:#0a1a2e;color:#60a5fa}
+.type-kilo{background:#1a0a2e;color:#c084fc}
+.inv-card{background:#1a1f2e;border-radius:10px;margin-bottom:8px;border:1px solid #2a3040;overflow:hidden}
+.inv-card-head{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;cursor:pointer}
+.inv-card-body{border-top:1px solid #2a3040;padding:10px 12px;display:none}
+.inv-card-body.open{display:block}
+.sum-block{background:#1a1f2e;border-radius:12px;padding:12px;border:1px solid #1e2533}
+.sum-bar{background:#0f1117;border-radius:6px;height:5px;overflow:hidden;margin-top:6px}
+.sum-bar-fill{height:100%;border-radius:6px}
+.stock-bar{background:#0f1117;border-radius:6px;height:6px;overflow:hidden;margin-top:5px}
+.stock-bar-fill{height:100%;border-radius:6px}
+.toggle-row{display:flex;background:#12161e;border-radius:10px;padding:3px;border:1px solid #1e2533;margin-bottom:12px}
+.toggle-btn{flex:1;padding:8px;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-size:12px;background:transparent;color:#6b7a8d;transition:all .15s}
+.toggle-btn.active{background:#1e2c40;color:#f0c060}
+.flex-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.empty{text-align:center;color:#4a5568;padding:20px;font-size:12px}
+.text-green{color:#4ade80}
+.text-blue{color:#60a5fa}
+.text-red{color:#f87171}
+.text-gold{color:#f0c060}
+.text-gray{color:#6b7a8d}
+.text-purple{color:#c084fc}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#0d2b1a;border:1px solid #1a5c35;color:#4ade80;padding:10px 22px;border-radius:20px;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+.ios-hint{background:#1a2c1a;border:1px solid #2a5c2a;border-radius:12px;padding:12px 14px;margin-bottom:12px;font-size:12px;color:#a0e0a0;line-height:1.7;display:none}
+.ios-hint.show{display:block}
+
+/* VOICE ===== */
+.voice-btn{position:relative;width:60px;height:60px;border-radius:50%;border:none;cursor:pointer;font-size:24px;transition:all .2s;display:flex;align-items:center;justify-content:center}
+.voice-btn.listening{animation:pulse 0.6s infinite;background:#c084fc;box-shadow:0 0 30px #c084fc66}
+.voice-btn.ready{background:#60a5fa;box-shadow:0 0 15px #60a5fa44}
+.voice-btn.error{background:#f87171;box-shadow:0 0 15px #f8717166}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(192,132,252,0.7)}70%{box-shadow:0 0 0 20px rgba(192,132,252,0)}}
+
+.voice-result{background:#1a1f2e;border-radius:10px;padding:12px;border:1px solid #2a3040;margin-bottom:10px}
+.voice-result-title{font-size:11px;color:#6b7a8d;margin-bottom:6px}
+.voice-result-text{font-size:14px;color:#e8e0d0;margin-bottom:8px;font-weight:600}
+.voice-confidence{display:flex;gap:8px;align-items:center;font-size:11px;margin-bottom:8px}
+.confidence-bar{flex:1;background:#0f1117;border-radius:4px;height:6px;overflow:hidden}
+.confidence-fill{height:100%;background:#4ade80;transition:width 0.3s}
+.voice-actions{display:flex;gap:8px}
+.voice-actions button{flex:1;padding:8px;font-size:12px}
+
+.voice-modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;z-index:500}
+.voice-modal.show{display:flex}
+.voice-modal-content{background:#12161e;border:1px solid #2a3040;border-radius:14px;padding:20px;text-align:center;max-width:300px}
+.voice-modal-title{font-size:14px;font-weight:600;margin-bottom:12px;color:#f0c060}
+.voice-modal-text{font-size:12px;color:#6b7a8d;margin-bottom:16px;line-height:1.6}
+.voice-modal-buttons{display:flex;gap:8px}
+.voice-modal-buttons button{flex:1;padding:10px}
+</style>
+</head>
+<body>
+<div class="header">
+<div class="header-logo">☕</div>
+<div>
+<div class="header-title">حسابداری کافه</div>
+<div class="header-sub">فروش · سود · انبار · گزارش</div>
+</div>
+<div class="header-date" id="todayDate"></div>
+</div>
+
+<div class="tabs">
+<button class="tab active" onclick="showTab('invoice',this)">🧾 فاکتور</button>
+<button class="tab" onclick="showTab('items',this)">📦 آیتم‌ها</button>
+<button class="tab" onclick="showTab('stock',this)">🏭 انبار</button>
+<button class="tab" onclick="showTab('reports',this)">📊 گزارش</button>
+</div>
+
+<div class="content">
+
+<!-- ===== INVOICE ===== -->
+<div id="sec-invoice" class="section active">
+<div class="ios-hint" id="iosHint">
+📲 برای نصب روی صفحه اصلی آیفون:<br>
+دکمه <b>Share ↑</b> پایین Safari → <b>Add to Home Screen</b>
+<button onclick="document.getElementById('iosHint').classList.remove('show')" style="float:left;background:none;border:none;color:#4ade80;font-size:16px;cursor:pointer">✕</button>
+</div>
+
+<!-- VOICE SECTION -->
+<div class="card">
+<div class="card-title">🎤 ورود صوتی</div>
+<div style="display:flex;justify-content:center;margin:15px 0">
+<button class="voice-btn ready" id="voiceBtn" onclick="toggleVoice()" title="برای صحبت کردن کلیک کنید">🎤</button>
+</div>
+<div id="voiceResult" style="display:none"></div>
+</div>
+
+<div class="card">
+<label>نام مشتری (اختیاری)</label>
+<input id="custName" placeholder="مثلاً: میز ۳ یا نام مشتری..." style="margin-top:4px">
+</div>
+
+<div class="card">
+<div class="card-title">آیتم‌های فاکتور</div>
+<div id="invLines"></div>
+<button class="btn btn-ghost btn-full" onclick="addLine()" style="border-style:dashed;color:#4a5568;margin-top:4px">
++ افزودن آیتم
+</button>
+</div>
+
+<div class="card" id="invTotals" style="display:none">
+<div class="card-title">جمع فاکتور</div>
+<div class="g2" style="margin-bottom:12px">
+<div class="stat-box"><div class="stat-label">فروش کل</div><div class="stat-value text-blue" id="totRev">۰</div></div>
+<div class="stat-box"><div class="stat-label">هزینه کل</div><div class="stat-value text-red" id="totCost">۰</div></div>
+<div class="stat-box"><div class="stat-label">سود خالص</div><div class="stat-value text-green" id="totProfit">۰</div></div>
+<div class="stat-box"><div class="stat-label">درصد سود</div><div class="stat-value text-gold" id="totMargin">۰٪</div></div>
+</div>
+<button class="btn btn-gold btn-full" onclick="saveInvoice()">✅ ثبت فاکتور</button>
+</div>
+</div>
+
+<!-- ===== ITEMS ===== -->
+<div id="sec-items" class="section">
+<div class="card">
+<div class="card-title" id="itemFormTitle">افزودن آیتم جدید</div>
+<div class="g2" style="margin-bottom:8px">
+<div><label>نام آیتم</label><input id="iName" placeholder="مثلاً: لاته، قهوه اتیوپی..."></div>
+<div>
+<label>نوع</label>
+<select id="iType" onchange="toggleItemUnit()">
+<option value="item">عددی (نوشیدنی / غذا)</option>
+<option value="kilo">وزنی (کیلو / گرم)</option>
+</select>
+</div>
+</div>
+<div id="iUnitRow" style="display:none;margin-bottom:8px">
+<label>واحد</label>
+<select id="iUnit"><option>کیلوگرم</option><option>گرم</option><option>عدد</option><option>بسته</option></select>
+</div>
+<div class="g2" style="margin-bottom:8px">
+<div><label>قیمت خرید (ت)</label><input id="iBuy" type="number" placeholder="۰" oninput="calcItemProfit()"></div>
+<div><label>قیمت فروش (ت)</label><input id="iSell" type="number" placeholder="۰" oninput="calcItemProfit()"></div>
+</div>
+<div id="itemCalc" style="display:none;font-size:12px;margin-bottom:10px;display:flex;gap:14px">
+<span class="text-green">سود: <span id="iCalcProfit"></span> ت</span>
+<span class="text-gold">مارجین: <span id="iCalcMargin"></span>٪</span>
+</div>
+<div class="flex-row">
+<button class="btn btn-green" id="itemSaveBtn" onclick="saveItem()">+ افزودن</button>
+<button class="btn btn-ghost" id="itemCancelBtn" onclick="cancelItemEdit()" style="display:none">انصراف</button>
+</div>
+</div>
+
+<div class="card">
+<div class="card-title">لیست همه آیتم‌ها</div>
+<input placeholder="🔍 جستجو..." oninput="filterItems(this.value)" style="margin-bottom:10px">
+<div style="display:flex;gap:6px;margin-bottom:10px">
+<button class="btn btn-sm" id="fAll" onclick="setItemFilter('all',this)" style="background:#1e2c40;border:1px solid #2a4060;color:#60a5fa">همه</button>
+<button class="btn btn-sm btn-ghost" id="fItem" onclick="setItemFilter('item',this)">عددی</button>
+<button class="btn btn-sm btn-ghost" id="fKilo" onclick="setItemFilter('kilo',this)">وزنی</button>
+</div>
+<div id="itemsList"></div>
+</div>
+</div>
+
+<!-- ===== STOCK ===== -->
+<div id="sec-stock" class="section">
+<div class="card">
+<div class="card-title" id="stockFormTitle">افزودن به انبار</div>
+<div class="g3" style="margin-bottom:8px">
+<div><label>نام ماده</label><input id="sName" placeholder="پودر اسپرسو..."></div>
+<div><label>واحد</label><select id="sUnit"><option>کیلوگرم</option><option>گرم</option><option>لیتر</option><option>عدد</option><option>بسته</option></select></div>
+<div><label>موجودی فعلی</label><input id="sQty" type="number" placeholder="۰" step="0.1"></div>
+</div>
+<div class="g2" style="margin-bottom:8px">
+<div><label>حداقل موجودی (هشدار)</label><input id="sMin" type="number" placeholder="۰" step="0.1"></div>
+<div><label>قیمت هر واحد (ت)</label><input id="sCost" type="number" placeholder="۰"></div>
+</div>
+<div class="flex-row">
+<button class="btn btn-green" id="stockSaveBtn" onclick="saveStock()">+ افزودن</button>
+<button class="btn btn-ghost" id="stockCancelBtn" onclick="cancelStockEdit()" style="display:none">انصراف</button>
+</div>
+</div>
+
+<div class="card">
+<div class="card-title">موجودی انبار</div>
+<div id="stockList"></div>
+</div>
+</div>
+
+<!-- ===== REPORTS ===== -->
+<div id="sec-reports" class="section">
+<div class="g2" style="margin-bottom:12px">
+<div class="sum-block" id="sumToday"></div>
+<div class="sum-block" id="sumMonth"></div>
+</div>
+<div class="toggle-row">
+<button class="toggle-btn active" onclick="showReport('daily',this)">فاکتورهای امروز</button>
+<button class="toggle-btn" onclick="showReport('monthly',this)">گزارش ماهانه</button>
+</div>
+<div id="reportDaily"></div>
+<div id="reportMonthly" style="display:none"></div>
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- VOICE MODAL -->
+<div class="voice-modal" id="voiceModal">
+<div class="voice-modal-content">
+<div class="voice-modal-title" id="voiceModalTitle">در حال شنیدن...</div>
+<div class="voice-modal-text" id="voiceModalText">لطفاً صحبت کنید...</div>
+<div style="margin:20px 0">
+<button class="voice-btn listening" onclick="stopVoice()">🎤</button>
+</div>
+<div class="voice-modal-buttons">
+<button class="btn btn-red" onclick="cancelVoice()">انصراف</button>
+</div>
+</div>
+</div>
+
+<script>
+// ===== INDEXEDDB SETUP =====
+const DB_NAME = 'CafeAccounting';
+const DB_VERSION = 1;
+const STORES = {
+  items: 'items',
+  invoices: 'invoices',
+  stock: 'stock'
+};
+
+let db = null;
+
+async function initDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    
+    req.onerror = () => {
+      console.error('DB Error:', req.error);
+      reject(req.error);
+    };
+    
+    req.onsuccess = () => {
+      db = req.result;
+      console.log('DB Initialized');
+      loadAllData();
+      resolve(db);
+    };
+    
+    req.onupgradeneeded = (e) => {
+      const database = e.target.result;
+      
+      if (!database.objectStoreNames.contains(STORES.items)) {
+        const itemStore = database.createObjectStore(STORES.items, { keyPath: 'id' });
+        itemStore.createIndex('name', 'name', { unique: false });
+        itemStore.createIndex('type', 'type', { unique: false });
+      }
+      
+      if (!database.objectStoreNames.contains(STORES.invoices)) {
+        const invStore = database.createObjectStore(STORES.invoices, { keyPath: 'id' });
+        invStore.createIndex('date', 'date', { unique: false });
+      }
+      
+      if (!database.objectStoreNames.contains(STORES.stock)) {
+        const stockStore = database.createObjectStore(STORES.stock, { keyPath: 'id' });
+        stockStore.createIndex('name', 'name', { unique: false });
+      }
+    };
+  });
+}
+
+async function dbAdd(storeName, data) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction([storeName], 'readwrite');
+    const store = tx.objectStore(storeName);
+    const req = store.add(data);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function dbPut(storeName, data) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction([storeName], 'readwrite');
+    const store = tx.objectStore(storeName);
+    const req = store.put(data);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function dbDelete(storeName, id) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction([storeName], 'readwrite');
+    const store = tx.objectStore(storeName);
+    const req = store.delete(id);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function dbGetAll(storeName) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction([storeName], 'readonly');
+    const store = tx.objectStore(storeName);
+    const req = store.getAll();
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+// ===== HELPERS =====
+function toF(n){return String(n).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);}
+function fmtP(n){return toF(Math.round(Number(n)||0).toLocaleString('en'));}
+const todayKey=()=>new Date().toISOString().slice(0,10);
+const monthKey=()=>new Date().toISOString().slice(0,7);
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ===== FUZZY MATCHING =====
+function levenshteinDistance(a, b) {
+  const track = Array(b.length + 1).fill(null).map(() =>
+    Array(a.length + 1).fill(null));
+  
+  for (let i = 0; i <= a.length; i += 1) track[0][i] = i;
+  for (let j = 0; j <= b.length; j += 1) track[j][0] = j;
+  
+  for (let j = 1; j <= b.length; j += 1) {
+    for (let i = 1; i <= a.length; i += 1) {
+      const indicator = a[i - 1] === b[j - 1] ? 0 : 1;
+      track[j][i] = Math.min(
+        track[j][i - 1] + 1,
+        track[j - 1][i] + 1,
+        track[j - 1][i - 1] + indicator
+      );
+    }
+  }
+  
+  return track[b.length][a.length];
+}
+
+function fuzzyMatch(input, target, threshold = 0.55) {
+  const normalized_input = input.trim().toLowerCase();
+  const normalized_target = target.trim().toLowerCase();
+  
+  const distance = levenshteinDistance(normalized_input, normalized_target);
+  const maxLen = Math.max(normalized_input.length, normalized_target.length);
+  const similarity = 1 - (distance / maxLen);
+  
+  return {
+    match: similarity >= threshold,
+    score: Math.round(similarity * 100)
+  };
+}
+
+// ===== VOICE RECOGNITION =====
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition = null;
+let isListening = false;
+
+function initVoice() {
+  if (!SpeechRecognition) {
+    toast('⚠️ مرورگر شما نمی‌تواند صوت را تشخیص دهد');
+    return false;
+  }
+  
+  recognition = new SpeechRecognition();
+  recognition.lang = 'fa-IR';
+  recognition.continuous = true;  // ✅ تغییر شد: true
+  recognition.interimResults = true;
+  recognition.maxAlternatives = 1;
+  
+  recognition.onstart = () => {
+    isListening = true;
+    document.getElementById('voiceModal').classList.add('show');
+    document.getElementById('voiceBtn').classList.remove('ready');
+    document.getElementById('voiceBtn').classList.add('listening');
+  };
+  
+  recognition.onresult = (event) => {
+    let interimTranscript = '';
+    let finalTranscript = '';
+    let confidence = 0;
+    
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const transcript = event.results[i][0].transcript;
+      
+      if (event.results[i].isFinal) {
+        finalTranscript += transcript;
+        confidence = Math.round(event.results[i][0].confidence * 100);
+      } else {
+        interimTranscript += transcript;
+      }
+    }
+    
+    document.getElementById('voiceModalText').textContent = interimTranscript || 'در حال شنیدن...';
+    
+    if (finalTranscript) {
+      handleVoiceResult(finalTranscript, confidence);
+    }
+  };
+  
+  recognition.onerror = (event) => {
+    console.error('Speech error:', event.error);
+    let errMsg = 'خطا در تشخیص صوت';
+    if (event.error === 'no-speech') errMsg = 'هیچ صدایی شنیده نشد';
+    if (event.error === 'network') errMsg = 'خطای شبکه';
+    
+    toast('⚠️ ' + errMsg);
+    document.getElementById('voiceModal').classList.remove('show');
+    document.getElementById('voiceBtn').classList.remove('listening');
+    document.getElementById('voiceBtn').classList.add('error');
+    setTimeout(() => {
+      document.getElementById('voiceBtn').classList.remove('error');
+      document.getElementById('voiceBtn').classList.add('ready');
+    }, 2000);
+  };
+  
+  recognition.onend = () => {
+    isListening = false;
+    document.getElementById('voiceModal').classList.remove('show');
+    document.getElementById('voiceBtn').classList.remove('listening');
+    document.getElementById('voiceBtn').classList.add('ready');
+  };
+  
+  return true;
+}
+
+function toggleVoice() {
+  if (!recognition) {
+    if (!initVoice()) return;
+  }
+  
+  if (isListening) {
+    recognition.stop();
+  } else {
+    // تایمر: بعد از ۸ ثانیه صمت، خودکار متوقف کن
+    setTimeout(() => {
+      if (isListening) {
+        console.log('Auto-stopping due to silence timeout');
+        recognition.stop();
+      }
+    }, 8000);
+    
+    recognition.start();
+  }
+}
+
+function stopVoice() {
+  if (recognition) {
+    recognition.stop();
+  }
+}
+
+function cancelVoice() {
+  if (recognition) {
+    recognition.abort();
+  }
+  isListening = false;
+  document.getElementById('voiceModal').classList.remove('show');
+  document.getElementById('voiceBtn').classList.remove('listening');
+  document.getElementById('voiceBtn').classList.add('ready');
+}
+
+function handleVoiceResult(transcript, confidence) {
+  console.log('Voice input:', transcript, 'Confidence:', confidence);
+  
+  // پردازش متن
+  const text = transcript.trim();
+  
+  // الگوی اعداد فارسی (حرفی)
+  const persianWordNumbers = {
+    'صفر': 0, 'یک': 1, 'دو': 2, 'سه': 3, 'چهار': 4, 'پنج': 5,
+    'شش': 6, 'هفت': 7, 'هشت': 8, 'نه': 9, 'ده': 10,
+    'یازده': 11, 'دوازده': 12, 'سیزده': 13, 'چهارده': 14, 'پانزده': 15,
+    'شانزده': 16, 'هفده': 17, 'هجده': 18, 'نوزده': 19, 'بیست': 20
+  };
+  
+  // الگوی اعداد فارسی (عددی)
+  const persianNumbers = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+  const englishNumbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+  
+  // تبدیل اعداد فارسی عددی به انگلیسی
+  let processedText = text;
+  persianNumbers.forEach((p, i) => {
+    processedText = processedText.replace(new RegExp(p, 'g'), englishNumbers[i]);
+  });
+  
+  console.log('Processed text:', processedText);
+  
+  // جدا کردن جملات بر اساس "و"
+  const sentences = processedText.split(/\s+و\s+/);
+  console.log('Split sentences:', sentences);
+  
+  // پردازش هر جمله
+  const parsedItems = [];
+  
+  for (const sentence of sentences) {
+    let itemName = '';
+    let quantity = 1;
+    
+    const trimmedSentence = sentence.trim();
+    if (!trimmedSentence) continue;
+    
+    console.log('Processing sentence:', trimmedSentence);
+    
+    // الگو ۱: "X تا نام محصول" (عدد انگلیسی)
+    let taPattern = /^(\d+)\s+تا\s+(.+)$/i;
+    let match = trimmedSentence.match(taPattern);
+    
+    if (match) {
+      quantity = parseInt(match[1]);
+      itemName = match[2].trim();
+      console.log('Pattern 1 (numeric): qty=' + quantity + ', name=' + itemName);
+    } else {
+      // الگو ۲: "X تا نام محصول" - با فاصله‌های اضافی
+      taPattern = /^(\d+)\s+[تت]?ا\s+(.+)$/i;
+      match = trimmedSentence.match(taPattern);
+      
+      if (match) {
+        quantity = parseInt(match[1]);
+        itemName = match[2].trim();
+        console.log('Pattern 2 (numeric alt): qty=' + quantity + ', name=' + itemName);
+      } else {
+        // الگو ۳: اعداد فارسی حرفی
+        taPattern = /^(\S+)\s+[تت]?ا\s+(.+)$/i;
+        match = trimmedSentence.match(taPattern);
+        
+        if (match && persianWordNumbers[match[1].toLowerCase()]) {
+          quantity = persianWordNumbers[match[1].toLowerCase()];
+          itemName = match[2].trim();
+          console.log('Pattern 3 (Persian word): qty=' + quantity + ', name=' + itemName);
+        } else {
+          // الگو ۴: فقط اسم (بدون تعداد)
+          itemName = trimmedSentence;
+          console.log('Pattern 4 (name only): qty=1, name=' + itemName);
+        }
+      }
+    }
+    
+    if (itemName) {
+      console.log('Final parsed:', 'quantity=' + quantity, 'name=' + itemName);
+      
+      // جستجو fuzzy برای این آیتم
+      let bestMatch = null;
+      let bestScore = 0;
+      
+      for (const item of items) {
+        const result = fuzzyMatch(itemName, item.name, 0.55);
+        console.log(`Comparing "${itemName}" with "${item.name}": ${result.score}%`);
+        if (result.score > bestScore) {
+          bestScore = result.score;
+          if (result.score >= 55) {
+            bestMatch = item;
+          }
+        }
+      }
+      
+      if (bestMatch && bestScore >= 55) {
+        parsedItems.push({
+          match: bestMatch,
+          quantity: quantity,
+          score: bestScore,
+          originalName: itemName
+        });
+      }
+    }
+  }
+  
+  console.log('All parsed items:', parsedItems);
+  
+  // نمایش نتیجه
+  if (parsedItems.length > 0) {
+    showMultiVoiceResult(text, confidence, parsedItems);
+  } else {
+    showVoiceResult(text, confidence, '', null, 1, 0);
+  }
+}
+
+function showVoiceResult(originalText, confidence, parsedName, matchedItem, quantity, bestScore) {
+  const resultDiv = document.getElementById('voiceResult');
+  
+  if (!matchedItem || bestScore < 55) {
+    // عدم تطابق - نمایش گزینه‌های دستی
+    resultDiv.innerHTML = `
+      <div class="voice-result">
+        <div class="voice-result-title">📢 شنیده شد:</div>
+        <div class="voice-result-text">"${originalText}"</div>
+        <div class="voice-confidence">
+          <span>اطمینان:</span>
+          <div class="confidence-bar">
+            <div class="confidence-fill" style="width:${confidence}%"></div>
+          </div>
+          <span>${confidence}%</span>
+        </div>
+        <div style="font-size:11px;color:#f0c060;margin-bottom:10px">❌ تطابق نیافت (${bestScore}%)</div>
+        <div style="font-size:11px;color:#6b7a8d;margin-bottom:10px">آیا می‌خواهید انتخاب دستی کنید؟</div>
+        <div class="voice-actions">
+          <button class="btn btn-blue btn-sm" onclick="showVoiceMenu()">انتخاب از منو</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('voiceResult').style.display='none'">خیر</button>
+        </div>
+      </div>
+    `;
+  } else {
+    // تطابق موفق
+    resultDiv.innerHTML = `
+      <div class="voice-result">
+        <div class="voice-result-title">📢 شنیده شد:</div>
+        <div class="voice-result-text">"${originalText}"</div>
+        <div class="voice-confidence">
+          <span>اطمینان:</span>
+          <div class="confidence-bar">
+            <div class="confidence-fill" style="width:${confidence}%"></div>
+          </div>
+          <span>${confidence}%</span>
+        </div>
+        <div style="font-size:11px;color:#4ade80;margin-bottom:10px">✅ تطابق یافت (${bestScore}%):</div>
+        <div style="background:#0f1117;border-radius:8px;padding:8px;margin-bottom:10px">
+          <div style="font-weight:600;color:#e8e0d0">${matchedItem.name}</div>
+          <div style="font-size:11px;color:#6b7a8d;margin-top:3px">تعداد: ${quantity}</div>
+          <div style="font-size:11px;color:#60a5fa;margin-top:2px">قیمت: ${fmtP(matchedItem.sell)} ت</div>
+        </div>
+        <div class="voice-actions">
+          <button class="btn btn-green btn-sm" onclick="addLineFromVoice('${matchedItem.name}', ${quantity}, ${matchedItem.sell}, ${matchedItem.buy})">✅ قبول</button>
+          <button class="btn btn-blue btn-sm" onclick="editVoiceResult('${matchedItem.name}', ${quantity})">ویرایش</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('voiceResult').style.display='none'">خیر</button>
+        </div>
+      </div>
+    `;
+  }
+  
+  resultDiv.style.display = 'block';
+}
+
+function addLineFromVoice(name, qty, sell = 0, buy = 0) {
+  const newLine = {
+    id: Date.now() + Math.random(),
+    name: name,
+    qty: qty || 1,
+    unit: 'عدد',
+    sell: sell || 0,
+    buy: buy || 0,
+    type: 'item'
+  };
+  
+  lines.push(newLine);
+  renderLines();
+  document.getElementById('voiceResult').style.display = 'none';
+  toast('✅ آیتم اضافه شد');
+}
+
+function showVoiceMenu() {
+  // نمایش منو برای انتخاب دستی
+  const menuHtml = items.map(item => `
+    <div class="list-item" onclick="addLineFromVoice('${item.name}', 1, ${item.sell}, ${item.buy}); document.getElementById('voiceResult').style.display='none'">
+      <div class="list-item-info">
+        <div class="list-item-name">${item.name}</div>
+        <div class="list-item-meta">
+          <span class="text-blue">قیمت: ${fmtP(item.sell)} ت</span>
+        </div>
+      </div>
+      <div style="font-size:12px;color:#4ade80">➕</div>
+    </div>
+  `).join('');
+  
+  document.getElementById('voiceResult').innerHTML = `
+    <div class="voice-result">
+      <div class="voice-result-title">📋 انتخاب از منو:</div>
+      <div style="max-height:300px;overflow-y:auto;">
+        ${menuHtml}
+      </div>
+    </div>
+  `;
+}
+
+function showMultiVoiceResult(originalText, confidence, parsedItems) {
+  const resultDiv = document.getElementById('voiceResult');
+  
+  const itemsHtml = parsedItems.map(item => `
+    <div style="background:#0f1117;border-radius:8px;padding:10px;margin-bottom:8px">
+      <div style="font-weight:600;color:#e8e0d0">${item.match.name}</div>
+      <div style="font-size:11px;color:#6b7a8d;margin-top:3px">تعداد: ${item.quantity}</div>
+      <div style="font-size:11px;color:#60a5fa;margin-top:2px">قیمت: ${fmtP(item.match.sell)} ت</div>
+      <div style="font-size:10px;color:#f0c060;margin-top:2px">تطابق: ${item.score}%</div>
+    </div>
+  `).join('');
+  
+  resultDiv.innerHTML = `
+    <div class="voice-result">
+      <div class="voice-result-title">📢 شنیده شد:</div>
+      <div class="voice-result-text">"${originalText}"</div>
+      <div class="voice-confidence">
+        <span>اطمینان:</span>
+        <div class="confidence-bar">
+          <div class="confidence-fill" style="width:${confidence}%"></div>
+        </div>
+        <span>${confidence}%</span>
+      </div>
+      <div style="font-size:11px;color:#4ade80;margin-bottom:10px">✅ تطابق‌های یافت شده (${parsedItems.length}):</div>
+      <div style="margin-bottom:10px">
+        ${itemsHtml}
+      </div>
+      <div class="voice-actions">
+        <button class="btn btn-green btn-sm" id="voiceAddBtn">✅ اضافه کن</button>
+        <button class="btn btn-ghost btn-sm" id="voiceCancelBtn">خیر</button>
+      </div>
+    </div>
+  `;
+  
+  resultDiv.style.display = 'block';
+  
+  // ذخیره آیتم‌ها
+  window.pendingVoiceItems = parsedItems;
+  
+  // Event listeners (بدون inline onclick!)
+  document.getElementById('voiceAddBtn').onclick = () => {
+    addPendingVoiceItems();
+  };
+  
+  document.getElementById('voiceCancelBtn').onclick = () => {
+    document.getElementById('voiceResult').style.display = 'none';
+  };
+}
+
+function addPendingVoiceItems() {
+  if (!window.pendingVoiceItems || window.pendingVoiceItems.length === 0) {
+    toast('⚠️ آیتمی برای اضافه کردن موجود نیست');
+    return;
+  }
+  
+  const count = window.pendingVoiceItems.length;
+  window.pendingVoiceItems.forEach(item => {
+    addLineFromVoice(item.match.name, item.quantity, item.match.sell, item.match.buy);
+  });
+  
+  document.getElementById('voiceResult').style.display = 'none';
+  window.pendingVoiceItems = null;
+  toast(`✅ ${count} آیتم اضافه شد`);
+}
+
+function testAddMultiple() {
+  const testItems = [
+    {name: 'اسپرسو', qty: 2, sell: 35000, buy: 8000},
+    {name: 'لاته', qty: 1, sell: 60000, buy: 14000}
+  ];
+  addMultipleItems(JSON.stringify(testItems));
+}
+
+function addMultipleItems(itemsJson) {
+  try {
+    const itemsList = typeof itemsJson === 'string' ? JSON.parse(itemsJson) : itemsJson;
+    itemsList.forEach(item => {
+      addLineFromVoice(item.name, item.qty, item.sell, item.buy);
+    });
+    document.getElementById('voiceResult').style.display = 'none';
+    toast(`✅ ${itemsList.length} آیتم اضافه شد`);
+  } catch (e) {
+    console.error('Error adding items:', e);
+    toast('⚠️ خطا در اضافه کردن آیتم‌ها');
+  }
+}
+
+// ===== STATE =====
+let items=[];
+let invoices=[];
+let stockItems=[];
+let lines=[];
+let editItemId=null,editStockId=null,itemFilter='all',itemSearch='';
+let bestScore = 0;
+
+// ===== INIT DATA =====
+async function loadAllData() {
+  try {
+    items = await dbGetAll(STORES.items);
+    invoices = await dbGetAll(STORES.invoices);
+    stockItems = await dbGetAll(STORES.stock);
+    
+    if (items.length === 0) {
+      const defaultItems = [
+        {id:1,name:'اسپرسو',type:'item',unit:'عدد',buy:8000,sell:35000},
+        {id:2,name:'کاپوچینو',type:'item',unit:'عدد',buy:12000,sell:55000},
+        {id:3,name:'لاته',type:'item',unit:'عدد',buy:14000,sell:60000},
+        {id:4,name:'موکا',type:'item',unit:'عدد',buy:16000,sell:65000},
+        {id:5,name:'آمریکانو',type:'item',unit:'عدد',buy:9000,sell:40000},
+        {id:6,name:'فراپه',type:'item',unit:'عدد',buy:18000,sell:75000},
+        {id:7,name:'کیک شکلاتی',type:'item',unit:'عدد',buy:20000,sell:80000},
+        {id:8,name:'قهوه اتیوپی',type:'kilo',unit:'کیلوگرم',buy:450000,sell:750000},
+        {id:9,name:'قهوه برزیل',type:'kilo',unit:'کیلوگرم',buy:380000,sell:620000},
+        {id:10,name:'بلند قهوه',type:'kilo',unit:'گرم',buy:500,sell:900}
+      ];
+      for (const item of defaultItems) {
+        await dbAdd(STORES.items, item);
+      }
+      items = defaultItems;
+    }
+    
+    if (stockItems.length === 0) {
+      const defaultStock = [
+        {id:1,name:'پودر اسپرسو',unit:'کیلوگرم',qty:5,min:1,cost:850000},
+        {id:2,name:'شیر',unit:'لیتر',qty:12,min:5,cost:18000}
+      ];
+      for (const stock of defaultStock) {
+        await dbAdd(STORES.stock, stock);
+      }
+      stockItems = defaultStock;
+    }
+    
+    console.log('Data loaded:', {items: items.length, invoices: invoices.length, stock: stockItems.length});
+  } catch (e) {
+    console.error('Load error:', e);
+    toast('⚠️ خطا در بارگذاری داده‌ها');
+  }
+}
+
+// ===== DATE =====
+document.getElementById('todayDate').textContent=toF(new Date().toLocaleDateString('fa-IR'));
+
+const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent)&&!window.navigator.standalone;
+if(isIOS) document.getElementById('iosHint').classList.add('show');
+
+// ===== TABS =====
+function showTab(name,btn){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('sec-'+name).classList.add('active');
+  btn.classList.add('active');
+  if(name==='items')renderItems();
+  if(name==='stock')renderStock();
+  if(name==='reports')renderReports();
+}
+
+// ===== INVOICE (SIMPLIFIED) =====
+function addLine(){
+  lines.push({id:Date.now()+Math.random(),name:'',qty:1,unit:'عدد',sell:0,buy:0,type:'item'});
+  renderLines();
+}
+
+function renderLines(){
+  const c=document.getElementById('invLines');
+  if(!lines.length){c.innerHTML='<div class="empty">هنوز آیتمی اضافه نشده</div>';updateTotals();return;}
+  c.innerHTML=lines.map((l,i)=>{
+    const isKilo=l.type==='kilo';
+    const profitUnit=l.sell-l.buy;
+    const profitTotal=profitUnit*l.qty;
+    const margin=l.sell>0?Math.round(profitUnit/l.sell*100):0;
+    return `<div class="inv-line">
+      <div class="inv-line-main">
+        <div class="ac-wrap" style="grid-column:1/2">
+          <input id="ln${i}" value="${l.name}" oninput="lnName(${i},this)" placeholder="نام آیتم...">
+          <div class="ac-list" id="ac${i}" style="display:none"></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:3px;min-width:80px">
+          <label style="font-size:10px;color:#6b7a8d">تعداد</label>
+          <input type="number" value="${l.qty}" min="0.1" step="${isKilo?'0.1':'1'}" oninput="lnQty(${i},this)" style="text-align:center">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:3px;min-width:90px">
+          <label style="font-size:10px;color:#6b7a8d">فروش (ت)</label>
+          <input type="number" value="${l.sell||''}" oninput="lnSell(${i},this)" placeholder="۰">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:3px;min-width:90px">
+          <label style="font-size:10px;color:#6b7a8d">خرید (ت)</label>
+          <input type="number" value="${l.buy||''}" oninput="lnBuy(${i},this)" placeholder="۰">
+        </div>
+        <button class="btn btn-red btn-sm" onclick="removeLine(${i})" style="height:38px;margin-top:auto">✕</button>
+      </div>
+      <div class="inv-line-info">
+        <span class="text-green">سود: ${fmtP(profitTotal)} ت</span>
+        <span class="text-gold">${toF(margin)}٪</span>
+      </div>
+    </div>`;
+  }).join('');
+  updateTotals();
+}
+
+function lnName(i,el){
+  lines[i].name=el.value;
+  const q=el.value.trim();
+  const ac=document.getElementById('ac'+i);
+  if(!q){ac.style.display='none';return;}
+  const sugs=items.filter(it=>it.name.includes(q)||it.name.startsWith(q.charAt(0))).slice(0,7);
+  if(!sugs.length){ac.style.display='none';return;}
+  ac.innerHTML=sugs.map(s=>`
+    <div class="ac-item" onmousedown="selectAC(${i},${s.id})">
+      <span>${s.name}</span>
+      <div style="display:flex;gap:6px;align-items:center">
+        <span class="ac-badge">${s.type==='kilo'?s.unit:'عدد'}</span>
+        <span style="color:#f0c060;font-size:11px">${fmtP(s.sell)} ت</span>
+      </div>
+    </div>`).join('');
+  ac.style.display='block';
+}
+
+function selectAC(i,itemId){
+  const it=items.find(x=>x.id===itemId);if(!it)return;
+  lines[i]={...lines[i],name:it.name,sell:it.sell,buy:it.buy,type:it.type,unit:it.unit};
+  renderLines();
+}
+
+function lnQty(i,el){lines[i].qty=parseFloat(el.value)||1;updateTotals();}
+function lnSell(i,el){lines[i].sell=parseInt(el.value)||0;renderLines();}
+function lnBuy(i,el){lines[i].buy=parseInt(el.value)||0;renderLines();}
+function removeLine(i){lines.splice(i,1);renderLines();}
+
+function updateTotals(){
+  const rev=lines.reduce((s,l)=>s+l.sell*l.qty,0);
+  const cost=lines.reduce((s,l)=>s+l.buy*l.qty,0);
+  const profit=rev-cost,margin=rev>0?Math.round(profit/rev*100):0;
+  const box=document.getElementById('invTotals');
+  if(!lines.length){box.style.display='none';return;}
+  box.style.display='block';
+  document.getElementById('totRev').textContent=fmtP(rev)+' ت';
+  document.getElementById('totCost').textContent=fmtP(cost)+' ت';
+  document.getElementById('totProfit').textContent=fmtP(profit)+' ت';
+  document.getElementById('totMargin').textContent=toF(margin)+'٪';
+}
+
+async function saveInvoice(){
+  if(!lines.length)return;
+  const rev=lines.reduce((s,l)=>s+l.sell*l.qty,0);
+  const cost=lines.reduce((s,l)=>s+l.buy*l.qty,0);
+  const profit=rev-cost,margin=rev>0?Math.round(profit/rev*100):0;
+  try {
+    await dbAdd(STORES.invoices, {
+      id:Date.now(),
+      date:todayKey(),
+      customer:document.getElementById('custName').value||'بدون نام',
+      lines:JSON.parse(JSON.stringify(lines)),
+      rev,cost,profit,margin
+    });
+    invoices.unshift({id:Date.now(),date:todayKey(),customer:document.getElementById('custName').value||'بدون نام',lines:JSON.parse(JSON.stringify(lines)),rev,cost,profit,margin});
+    document.getElementById('custName').value='';
+    lines=[];
+    renderLines();
+    document.getElementById('voiceResult').style.display='none';
+    toast('✅ فاکتور ثبت شد');
+  } catch (e) {
+    console.error('Save error:', e);
+    toast('⚠️ خطا در ذخیره');
+  }
+}
+
+// ===== ITEMS =====
+function toggleItemUnit(){
+  const type=document.getElementById('iType').value;
+  document.getElementById('iUnitRow').style.display=type==='kilo'?'block':'none';
+}
+
+function calcItemProfit(){
+  const b=parseInt(document.getElementById('iBuy').value)||0;
+  const s=parseInt(document.getElementById('iSell').value)||0;
+  if(!s)return;
+  const profit=s-b;
+  const margin=Math.round(profit/s*100);
+  document.getElementById('iCalcProfit').textContent=fmtP(profit);
+  document.getElementById('iCalcMargin').textContent=toF(margin);
+  document.getElementById('itemCalc').style.display='flex';
+}
+
+async function saveItem(){
+  const name=document.getElementById('iName').value.trim();
+  const type=document.getElementById('iType').value;
+  const unit=type==='kilo'?document.getElementById('iUnit').value:'عدد';
+  const buy=parseInt(document.getElementById('iBuy').value)||0;
+  const sell=parseInt(document.getElementById('iSell').value)||0;
+  
+  if(!name||!sell)return toast('⚠️ نام و قیمت فروش الزامی است');
+  
+  try {
+    if(editItemId!==null){
+      const updated={...items.find(i=>i.id===editItemId),name,type,unit,buy,sell};
+      await dbPut(STORES.items, updated);
+      items=items.map(i=>i.id===editItemId?updated:i);
+      editItemId=null;
+      document.getElementById('itemFormTitle').textContent='افزودن آیتم جدید';
+      document.getElementById('itemSaveBtn').textContent='+ افزودن';
+      document.getElementById('itemCancelBtn').style.display='none';
+      toast('✏️ ویرایش شد');
+    } else {
+      const newItem={id:Date.now(),name,type,unit,buy,sell};
+      await dbAdd(STORES.items, newItem);
+      items.push(newItem);
+      toast('✅ آیتم اضافه شد');
+    }
+    ['iName','iBuy','iSell'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('iType').value='item';
+    toggleItemUnit();
+    document.getElementById('itemCalc').style.display='none';
+    renderItems();
+  } catch (e) {
+    console.error('Save error:', e);
+    toast('⚠️ خطا');
+  }
+}
+
+function startEditItem(id){
+  const it=items.find(i=>i.id===id);if(!it)return;
+  editItemId=id;
+  document.getElementById('iName').value=it.name;
+  document.getElementById('iType').value=it.type||'item';
+  toggleItemUnit();
+  if(it.type==='kilo')document.getElementById('iUnit').value=it.unit;
+  document.getElementById('iBuy').value=it.buy;
+  document.getElementById('iSell').value=it.sell;
+  document.getElementById('itemFormTitle').textContent='ویرایش آیتم';
+  document.getElementById('itemSaveBtn').textContent='ذخیره';
+  document.getElementById('itemCancelBtn').style.display='inline-block';
+  calcItemProfit();
+  document.getElementById('iName').scrollIntoView({behavior:'smooth'});
+}
+
+function cancelItemEdit(){
+  editItemId=null;
+  ['iName','iBuy','iSell'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('iType').value='item';toggleItemUnit();
+  document.getElementById('itemFormTitle').textContent='افزودن آیتم جدید';
+  document.getElementById('itemSaveBtn').textContent='+ افزودن';
+  document.getElementById('itemCancelBtn').style.display='none';
+  document.getElementById('itemCalc').style.display='none';
+}
+
+async function deleteItem(id){
+  if(!confirm('حذف شود؟'))return;
+  try {
+    await dbDelete(STORES.items, id);
+    items=items.filter(i=>i.id!==id);
+    renderItems();
+    toast('🗑️ حذف شد');
+  } catch (e) {
+    console.error('Delete error:', e);
+    toast('⚠️ خطا');
+  }
+}
+
+function setItemFilter(f,btn){
+  itemFilter=f;
+  document.querySelectorAll('#fAll,#fItem,#fKilo').forEach(b=>{b.className='btn btn-sm btn-ghost';});
+  btn.style.background='#1e2c40';btn.style.border='1px solid #2a4060';btn.style.color='#60a5fa';
+  renderItems();
+}
+
+function filterItems(q){itemSearch=q;renderItems();}
+
+function renderItems(){
+  const list=document.getElementById('itemsList');
+  let filtered=items;
+  if(itemSearch)filtered=filtered.filter(i=>i.name.includes(itemSearch));
+  if(itemFilter==='item')filtered=filtered.filter(i=>i.type!=='kilo');
+  if(itemFilter==='kilo')filtered=filtered.filter(i=>i.type==='kilo');
+  if(!filtered.length){list.innerHTML='<div class="empty">آیتمی یافت نشد</div>';return;}
+  list.innerHTML=filtered.map(it=>{
+    const m=it.sell>0?Math.round((it.sell-it.buy)/it.sell*100):0;
+    const bc=m>=50?'badge-green':m>=30?'badge-yellow':'badge-orange';
+    const typeLabel=it.type==='kilo'?`<span class="type-tag type-kilo">وزنی · ${it.unit}</span>`:`<span class="type-tag type-drink">عددی</span>`;
+    return `<div class="list-item">
+      <div class="list-item-info">
+        <div class="list-item-name">${it.name}</div>
+        <div class="list-item-meta">
+          ${typeLabel}
+          <span class="text-red">خرید: ${fmtP(it.buy)}</span>
+          <span class="text-blue">فروش: ${fmtP(it.sell)}</span>
+          <span class="text-green">سود: ${fmtP(it.sell-it.buy)}</span>
+          <span class="badge ${bc}">${toF(m)}٪</span>
+        </div>
+      </div>
+      <button class="btn btn-blue btn-sm" onclick="startEditItem(${it.id})">ویرایش</button>
+      <button class="btn btn-red btn-sm" onclick="deleteItem(${it.id})">حذف</button>
+    </div>`;
+  }).join('');
+}
+
+// ===== STOCK =====
+async function saveStock(){
+  const name=document.getElementById('sName').value.trim();
+  const unit=document.getElementById('sUnit').value;
+  const qty=parseFloat(document.getElementById('sQty').value)||0;
+  const min=parseFloat(document.getElementById('sMin').value)||0;
+  const cost=parseInt(document.getElementById('sCost').value)||0;
+  
+  if(!name)return toast('⚠️ نام را وارد کنید');
+  
+  try {
+    if(editStockId!==null){
+      const updated={...stockItems.find(s=>s.id===editStockId),name,unit,qty,min,cost};
+      await dbPut(STORES.stock, updated);
+      stockItems=stockItems.map(s=>s.id===editStockId?updated:s);
+      editStockId=null;
+      document.getElementById('stockFormTitle').textContent='افزودن به انبار';
+      document.getElementById('stockSaveBtn').textContent='+ افزودن';
+      document.getElementById('stockCancelBtn').style.display='none';
+      toast('✏️ ویرایش شد');
+    } else {
+      const newStock={id:Date.now(),name,unit,qty,min,cost};
+      await dbAdd(STORES.stock, newStock);
+      stockItems.push(newStock);
+      toast('✅ اضافه شد');
+    }
+    ['sName','sQty','sMin','sCost'].forEach(id=>document.getElementById(id).value='');
+    renderStock();
+  } catch (e) {
+    console.error('Save error:', e);
+    toast('⚠️ خطا');
+  }
+}
+
+function startEditStock(id){
+  const s=stockItems.find(x=>x.id===id);if(!s)return;
+  editStockId=id;
+  document.getElementById('sName').value=s.name;
+  document.getElementById('sUnit').value=s.unit;
+  document.getElementById('sQty').value=s.qty;
+  document.getElementById('sMin').value=s.min;
+  document.getElementById('sCost').value=s.cost;
+  document.getElementById('stockFormTitle').textContent='ویرایش';
+  document.getElementById('stockSaveBtn').textContent='ذخیره';
+  document.getElementById('stockCancelBtn').style.display='inline-block';
+  document.getElementById('sName').scrollIntoView({behavior:'smooth'});
+}
+
+function cancelStockEdit(){
+  editStockId=null;
+  ['sName','sQty','sMin','sCost'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('stockFormTitle').textContent='افزودن به انبار';
+  document.getElementById('stockSaveBtn').textContent='+ افزودن';
+  document.getElementById('stockCancelBtn').style.display='none';
+}
+
+async function updateStockQty(id,delta){
+  const s=stockItems.find(x=>x.id===id);if(!s)return;
+  s.qty=Math.max(0,parseFloat((s.qty+delta).toFixed(2)));
+  try {
+    await dbPut(STORES.stock, s);
+    renderStock();
+  } catch (e) {
+    console.error('Update error:', e);
+    toast('⚠️ خطا');
+  }
+}
+
+async function deleteStock(id){
+  if(!confirm('حذف شود؟'))return;
+  try {
+    await dbDelete(STORES.stock, id);
+    stockItems=stockItems.filter(s=>s.id!==id);
+    renderStock();
+    toast('🗑️ حذف شد');
+  } catch (e) {
+    console.error('Delete error:', e);
+    toast('⚠️ خطا');
+  }
+}
+
+function renderStock(){
+  const list=document.getElementById('stockList');
+  if(!stockItems.length){list.innerHTML='<div class="empty">انباری ثبت نشده</div>';return;}
+  list.innerHTML=stockItems.map(s=>{
+    const pct=s.min>0?Math.min(100,Math.round(s.qty/s.min*100)):100;
+    const low=s.min>0&&s.qty<=s.min;
+    const barColor=low?'#f87171':pct>150?'#4ade80':'#f0c060';
+    return `<div class="list-item" style="${low?'border-color:#4a2020':''}">
+      <div class="list-item-info">
+        <div class="list-item-name" style="${low?'color:#f87171':''}">${s.name}${low?' ⚠️ کم است':''}</div>
+        <div class="list-item-meta">
+          <span class="text-blue">موجودی: ${toF(s.qty)} ${s.unit}</span>
+          <span class="text-gray">حداقل: ${toF(s.min)}</span>
+          ${s.cost?`<span class="text-gold">هر ${s.unit}: ${fmtP(s.cost)} ت</span>`:``}
+          ${s.cost?`<span class="text-green">ارزش: ${fmtP(s.qty*s.cost)} ت</span>`:''}
+        </div>
+        <div class="stock-bar"><div class="stock-bar-fill" style="width:${Math.min(100,pct)}%;background:${barColor}"></div></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+        <div style="display:flex;gap:3px">
+          <button class="btn btn-green btn-sm" onclick="updateStockQty(${s.id},1)">+۱</button>
+          <button class="btn btn-red btn-sm" onclick="updateStockQty(${s.id},-1)">-۱</button>
+        </div>
+        <div style="display:flex;gap:3px">
+          <button class="btn btn-blue btn-sm" onclick="startEditStock(${s.id})">ویرایش</button>
+          <button class="btn btn-red btn-sm" onclick="deleteStock(${s.id})">حذف</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ===== REPORTS =====
+function showReport(which,btn){
+  document.querySelectorAll('.toggle-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('reportDaily').style.display=which==='daily'?'block':'none';
+  document.getElementById('reportMonthly').style.display=which==='monthly'?'block':'none';
+}
+
+function renderReports(){
+  const today=todayKey(),thisMonth=monthKey();
+  const todayInvs=invoices.filter(i=>i.date===today);
+  const monthInvs=invoices.filter(i=>i.date.startsWith(thisMonth));
+  const sum=list=>({rev:list.reduce((s,i)=>s+i.rev,0),cost:list.reduce((s,i)=>s+i.cost,0),profit:list.reduce((s,i)=>s+i.profit,0),count:list.length});
+  const ts=sum(todayInvs),ms=sum(monthInvs);
+  const tm=ts.rev>0?Math.round(ts.profit/ts.rev*100):0;
+  const mm=ms.rev>0?Math.round(ms.profit/ms.rev*100):0;
+  
+  document.getElementById('sumToday').innerHTML=`
+    <div style="font-size:11px;color:#6b7a8d;margin-bottom:5px">امروز</div>
+    <div style="font-size:10px;color:#8a9ab0;margin-bottom:3px">${toF(ts.count)} فاکتور</div>
+    <div style="font-size:17px;font-weight:800;color:#4ade80">${fmtP(ts.profit)} <span style="font-size:10px;font-weight:400">ت سود</span></div>
+    <div style="font-size:10px;color:#6b7a8d;margin-top:2px">فروش: ${fmtP(ts.rev)} ت</div>
+    <div class="sum-bar"><div class="sum-bar-fill" style="width:${Math.min(100,tm)}%;background:linear-gradient(90deg,#60a5fa66,#60a5fa)"></div></div>
+    <div style="font-size:10px;color:#60a5fa;margin-top:3px">مارجین: ${toF(tm)}٪</div>
+  `;
+  
+  document.getElementById('sumMonth').innerHTML=`
+    <div style="font-size:11px;color:#6b7a8d;margin-bottom:5px">این ماه</div>
+    <div style="font-size:10px;color:#8a9ab0;margin-bottom:3px">${toF(ms.count)} فاکتور</div>
+    <div style="font-size:17px;font-weight:800;color:#4ade80">${fmtP(ms.profit)} <span style="font-size:10px;font-weight:400">ت سود</span></div>
+    <div style="font-size:10px;color:#6b7a8d;margin-top:2px">فروش: ${fmtP(ms.rev)} ت</div>
+    <div class="sum-bar"><div class="sum-bar-fill" style="width:${Math.min(100,mm)}%;background:linear-gradient(90deg,#c084fc66,#c084fc)"></div></div>
+    <div style="font-size:10px;color:#c084fc;margin-top:3px">مارجین: ${toF(mm)}٪</div>
+  `;
+  
+  const dailyEl=document.getElementById('reportDaily');
+  if(!todayInvs.length){
+    dailyEl.innerHTML='<div class="card"><div class="empty">هنوز فاکتوری امروز ثبت نشده</div></div>';
+  } else {
+    dailyEl.innerHTML=todayInvs.map(inv=>{
+      const t=new Date(inv.id).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'});
+      const linesHtml=inv.lines.map(l=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px solid #1a1f2e"><span>${l.name} ×${toF(l.qty)} ${l.unit||'عدد'}</span><span class="text-blue">${fmtP(l.sell*l.qty)} ت</span></div>`).join('');
+      return `<div class="inv-card"><div class="inv-card-head" onclick="toggleCard(this)"><div><span style="font-weight:600">${inv.customer}</span><span style="font-size:10px;color:#6b7a8d;margin-right:6px">${toF(t)}</span></div><div style="display:flex;gap:8px;align-items:center"><span class="text-green" style="font-size:12px">${fmtP(inv.profit)} ت سود</span><span class="text-gray" style="font-size:11px">▼</span></div></div><div class="inv-card-body">${linesHtml}<div style="display:flex;gap:12px;margin-top:8px;font-size:11px;flex-wrap:wrap"><span class="text-blue">فروش: ${fmtP(inv.rev)} ت</span><span class="text-red">خرید: ${fmtP(inv.cost)} ت</span><span class="text-green">سود: ${fmtP(inv.profit)} ت</span><span class="text-gold">${toF(inv.margin)}٪</span></div></div></div>`;
+    }).join('');
+  }
+  
+  const byDay={};
+  monthInvs.forEach(inv=>{
+    if(!byDay[inv.date])byDay[inv.date]={rev:0,profit:0,count:0};
+    byDay[inv.date].rev+=inv.rev;
+    byDay[inv.date].profit+=inv.profit;
+    byDay[inv.date].count++;
+  });
+  const days=Object.entries(byDay).sort((a,b)=>b[0].localeCompare(a[0]));
+  const monthEl=document.getElementById('reportMonthly');
+  if(!days.length){
+    monthEl.innerHTML='<div class="card"><div class="empty">داده‌ای برای این ماه وجود ندارد</div></div>';
+  } else {
+    monthEl.innerHTML=days.map(([date,d])=>`<div class="list-item"><div class="list-item-info"><div class="list-item-name">${toF(new Date(date).toLocaleDateString('fa-IR'))}</div><div class="list-item-meta"><span class="text-gray">${toF(d.count)} فاکتور</span><span class="text-blue">فروش: ${fmtP(d.rev)} ت</span><span class="text-green">سود: ${fmtP(d.profit)} ت</span></div></div></div>`).join('');
+  }
+}
+
+function toggleCard(head){
+  const body=head.nextElementSibling;
+  body.classList.toggle('open');
+  head.querySelector('span:last-child').textContent=body.classList.contains('open')?'▲':'▼';
+}
+
+// ===== INIT =====
+initDB().then(() => {
+  renderLines();
+  console.log('Voice Recognition Ready');
+}).catch(e => {
+  console.error('DB init failed:', e);
+  toast('⚠️ خطا در راه‌اندازی پایگاه داده');
+});
+</script>
+</body>
+</html>
