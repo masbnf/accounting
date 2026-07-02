@@ -9,6 +9,7 @@
 <meta name="theme-color" content="#0f1117">
 <title>حسابداری کافه</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode.react/1.0.1/qrcode.react.production.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;800&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
@@ -1382,29 +1383,62 @@ function exportDataAsQR() {
 
 function generateQRCode(data) {
   const qrContainer = document.getElementById('qrCodeContainer');
+  if (!qrContainer) {
+    toast('⚠️ QR Container پیدا نشد');
+    return;
+  }
+  
   qrContainer.innerHTML = '';
   
   const modal = document.getElementById('qrModal');
   modal.classList.add('show');
   
   // ذخیره متن برای copy
-  document.getElementById('qrTextData').value = data;
+  const textArea = document.getElementById('qrTextData');
+  if (textArea) {
+    textArea.value = data;
+  }
+  
+  // چک کردن QRCode library
+  if (typeof QRCode === 'undefined') {
+    console.warn('QRCode library not loaded yet, trying again...');
+    // دوباره تلاش کن
+    setTimeout(() => generateQRCode(data), 500);
+    return;
+  }
   
   setTimeout(() => {
     try {
-      new QRCode(document.getElementById('qrCodeContainer'), {
+      // پاک کردن QR قدیمی
+      qrContainer.innerHTML = '';
+      
+      // تولید جدید
+      new QRCode(qrContainer, {
         text: data,
         width: 250,
         height: 250,
         colorDark: '#e8e0d0',
-        colorLight: '#0f1117'
+        colorLight: '#0f1117',
+        correctLevel: QRCode.CorrectLevel.H
       });
-      console.log('QR Code generated');
+      
+      console.log('✅ QR Code generated successfully');
+      toast('✅ QR Code آماده است');
+      
     } catch (e) {
-      console.error('QR Error:', e);
-      toast('⚠️ خطا در تولید QR');
+      console.error('❌ QR Error:', e);
+      
+      // نمایش متن به جای QR
+      qrContainer.innerHTML = `
+        <div style="background:#0f1117;border:1px solid #2a3040;border-radius:10px;padding:15px;max-height:200px;overflow-y:auto">
+          <div style="font-size:10px;color:#6b7a8d;margin-bottom:10px">⚠️ QR تولید نشد، از متن استفاده کن:</div>
+          <textarea style="width:100%;height:150px;padding:10px;background:#12161e;border:1px solid #1e2533;border-radius:6px;color:#e8e0d0;font-size:10px;font-family:monospace;resize:none" readonly>${data}</textarea>
+        </div>
+      `;
+      
+      toast('⚠️ از متن استفاده کن');
     }
-  }, 100);
+  }, 200);
 }
 
 function importDataFromQR() {
