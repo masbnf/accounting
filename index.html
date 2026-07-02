@@ -591,7 +591,7 @@ function handleVoiceResult(transcript, confidence) {
       console.log('Pattern 1 (numeric تا): qty=' + quantity + ', name=' + itemName);
     } else {
       // الگو ۲: "X گرم/کیلو نام" یا "X [unit] نام"
-      const unitPattern = /^(\d+)\s+(گرم|کیلو|گرمی|کیلویی|g|kg|گ|ک)\s+(.+)$/i;
+      const unitPattern = /^(\d+)\s+(گرم|کیلوگرم|کیلو|گرمی|کیلوگرمی|کیلویی|g|kg|گ|ک)\s+(.+)$/i;
       match = trimmedSentence.match(unitPattern);
       
       if (match) {
@@ -601,7 +601,7 @@ function handleVoiceResult(transcript, confidence) {
         // تشخیص واحد
         if (unitStr === 'گرم' || unitStr === 'گرمی' || unitStr === 'g' || unitStr === 'گ') {
           unit = 'گرم';
-        } else if (unitStr === 'کیلو' || unitStr === 'کیلویی' || unitStr === 'kg' || unitStr === 'ک') {
+        } else if (unitStr === 'کیلوگرم' || unitStr === 'کیلوگرمی' || unitStr === 'کیلو' || unitStr === 'کیلویی' || unitStr === 'kg' || unitStr === 'ک') {
           unit = 'کیلوگرم';
         }
         
@@ -619,7 +619,7 @@ function handleVoiceResult(transcript, confidence) {
           console.log('Pattern 3 (Persian word تا): qty=' + quantity + ', name=' + itemName);
         } else {
           // الگو ۴: "عدد فارسی گرم/کیلو نام"
-          const persianUnitPattern = /^(\S+)\s+(گرم|کیلو|گرمی|کیلویی)\s+(.+)$/i;
+          const persianUnitPattern = /^(\S+)\s+(گرم|کیلوگرم|کیلو|گرمی|کیلوگرمی|کیلویی)\s+(.+)$/i;
           match = trimmedSentence.match(persianUnitPattern);
           
           if (match && persianWordNumbers[match[1].toLowerCase()]) {
@@ -628,7 +628,7 @@ function handleVoiceResult(transcript, confidence) {
             
             if (unitStr === 'گرم' || unitStr === 'گرمی') {
               unit = 'گرم';
-            } else if (unitStr === 'کیلو' || unitStr === 'کیلویی') {
+            } else if (unitStr === 'کیلوگرم' || unitStr === 'کیلوگرمی' || unitStr === 'کیلو' || unitStr === 'کیلویی') {
               unit = 'کیلوگرم';
             }
             
@@ -662,27 +662,39 @@ function handleVoiceResult(transcript, confidence) {
       }
       
       if (bestMatch && bestScore >= 55) {
-        // محاسبه قیمت برای وزنی‌ها
+        // مهم: sell/buy همیشه «قیمت واحد» هستند (بر اساس واحدی که آیتم با آن
+        // تعریف شده، مثلاً هر کیلوگرم یا هر گرم) و هرگز نباید از قبل در تعداد
+        // ضرب شوند، چون هنگام ثبت در فاکتور دوباره qty × sell محاسبه می‌شود.
+        // اینجا فقط «تعداد» را به واحدِ خودِ آیتم تبدیل می‌کنیم.
         let finalQty = quantity;
-        let finalPrice = bestMatch.sell;
+        let finalUnit = unit;
+        const itemUnit = bestMatch.unit || (bestMatch.type === 'kilo' ? 'کیلوگرم' : 'عدد');
         
-        if (bestMatch.type === 'kilo' && unit === 'گرم') {
-          // تبدیل گرم به کیلو و محاسبه قیمت
-          const basePricePerKilo = bestMatch.sell;
-          finalQty = quantity / 1000; // تبدیل گرم به کیلو
-          finalPrice = Math.round((quantity / 1000) * basePricePerKilo);
-          
-          console.log(`Weight calculation: ${quantity}g = ${finalQty.toFixed(3)}kg × ${basePricePerKilo}t = ${finalPrice}t`);
+        if (bestMatch.type === 'kilo' && (unit === 'گرم' || unit === 'کیلوگرم')) {
+          // اول همه‌چیز را به گرم تبدیل می‌کنیم، بعد به واحد خودِ آیتم برمی‌گردانیم
+          const grams = unit === 'گرم' ? quantity : quantity * 1000;
+          if (itemUnit === 'گرم') {
+            finalQty = grams;
+            finalUnit = 'گرم';
+          } else {
+            // پیش‌فرض: کیلوگرم
+            finalQty = grams / 1000;
+            finalUnit = 'کیلوگرم';
+          }
+          console.log(`Weight calculation: ${quantity}${unit==='گرم'?'g':'kg'} = ${grams}g = ${finalQty} ${finalUnit} × ${bestMatch.sell}t/${itemUnit} = ${Math.round(finalQty*bestMatch.sell)}t`);
         }
         
         parsedItems.push({
           match: bestMatch,
           quantity: finalQty,
           originalQty: quantity,
-          unit: unit,
+          spokenUnit: unit,
+          unit: finalUnit,
           score: bestScore,
           originalName: itemName,
-          calculatedPrice: finalPrice
+          unitPriceSell: bestMatch.sell,
+          unitPriceBuy: bestMatch.buy,
+          lineTotal: Math.round(finalQty * bestMatch.sell)
         });
       }
     }
@@ -798,16 +810,19 @@ function showMultiVoiceResult(originalText, confidence, parsedItems) {
   const resultDiv = document.getElementById('voiceResult');
   
   const itemsHtml = parsedItems.map(item => {
-    const displayQty = item.unit === 'گرم' ? `${toF(Math.round(item.originalQty))}g` : `${toF(item.quantity)} ${item.unit || 'عدد'}`;
-    const displayPrice = item.calculatedPrice || item.match.sell;
+    const isWeightSpoken = item.spokenUnit === 'گرم' || item.spokenUnit === 'کیلوگرم';
+    const displayQty = isWeightSpoken
+      ? `${toF(item.originalQty)} ${item.spokenUnit}`
+      : `${toF(item.quantity)} ${item.unit || 'عدد'}`;
     
     return `
     <div style="background:#0f1117;border-radius:8px;padding:10px;margin-bottom:8px">
       <div style="font-weight:600;color:#e8e0d0">${item.match.name}</div>
       <div style="font-size:11px;color:#6b7a8d;margin-top:3px">تعداد: ${displayQty}</div>
-      <div style="font-size:11px;color:#60a5fa;margin-top:2px">قیمت: ${fmtP(displayPrice)} ت</div>
+      <div style="font-size:11px;color:#60a5fa;margin-top:2px">قیمت واحد: ${fmtP(item.unitPriceSell)} ت / ${item.match.type==='kilo' ? (item.match.unit||'کیلوگرم') : 'عدد'}</div>
+      <div style="font-size:12px;color:#4ade80;font-weight:700;margin-top:2px">جمع این آیتم: ${fmtP(item.lineTotal)} ت</div>
       <div style="font-size:10px;color:#f0c060;margin-top:2px">تطابق: ${item.score}%</div>
-      ${item.unit === 'گرم' ? `<div style="font-size:10px;color:#a0e0a0;margin-top:2px">💧 محاسبه وزن: ${item.originalQty}g ÷ 1000 × قیمت</div>` : ''}
+      ${isWeightSpoken ? `<div style="font-size:10px;color:#a0e0a0;margin-top:2px">💧 ${toF(item.quantity)} ${item.unit} × ${fmtP(item.unitPriceSell)} ت = ${fmtP(item.lineTotal)} ت</div>` : ''}
     </div>
   `;
   }).join('');
@@ -857,14 +872,15 @@ function addPendingVoiceItems() {
   
   const count = window.pendingVoiceItems.length;
   window.pendingVoiceItems.forEach(item => {
-    const finalPrice = item.calculatedPrice || item.match.sell;
+    // نکته مهم: sell/buy باید «قیمت واحد» (هر کیلوگرم/گرم/عدد) بمانند، نه قیمت کل،
+    // چون در فاکتور مقدار (qty) دوباره در قیمت واحد ضرب می‌شود.
     addLineFromVoice(
       item.match.name, 
-      item.quantity, 
-      finalPrice, 
-      item.match.buy,
-      item.unit,  // ✅ unit اضافه شد
-      item.match.type  // ✅ type اضافه شد
+      item.quantity,          // تعداد، تبدیل‌شده به واحدِ خودِ آیتم (مثلاً کیلوگرم)
+      item.unitPriceSell,     // قیمت واحد فروش - نه قیمت کل
+      item.unitPriceBuy,      // قیمت واحد خرید
+      item.unit,               // واحد نمایشی هماهنگ با تعداد
+      item.match.type
     );
   });
   
