@@ -1368,14 +1368,37 @@ function exportDataAsQR() {
   const jsonData = JSON.stringify(exportData);
   console.log('Export data size:', jsonData.length, 'bytes');
   
-  if (jsonData.length > 2500) {
-    toast('⚠️ داده‌ها خیلی بزرگ! فقط آیتم‌ها صادر میشود');
+  // QR max size ~2953 bytes
+  // اگر بزرگ باشد، فقط آیتم‌ها صادر کن
+  if (jsonData.length > 2000) {
+    console.log('Data too large, exporting items only');
+    toast('⚠️ داده‌ها بزرگ است، فقط آیتم‌ها صادر میشود');
+    
     const smallData = {
-      version: 1,
-      items: items,
-      timestamp: new Date().toISOString()
+      v: 1,  // نسخه
+      i: items.map(it => ({  // items (فشرده)
+        id: it.id,
+        n: it.name,
+        t: it.type,
+        u: it.unit,
+        b: it.buy,
+        s: it.sell
+      }))
     };
-    generateQRCode(JSON.stringify(smallData));
+    
+    const compressedJson = JSON.stringify(smallData);
+    console.log('Compressed size:', compressedJson.length, 'bytes');
+    
+    if (compressedJson.length > 2000) {
+      // حتی فشرده شده هم بزرگ است، فقط نام و قیمت
+      const verySmall = {
+        v: 1,
+        i: items.map(it => [it.name, it.sell])  // فقط نام و قیمت فروش
+      };
+      generateQRCode(JSON.stringify(verySmall));
+    } else {
+      generateQRCode(compressedJson);
+    }
   } else {
     generateQRCode(jsonData);
   }
@@ -1449,10 +1472,44 @@ function importDataFromQR() {
   }
   
   try {
-    console.log('Parsing JSON:', jsonText.substring(0, 50) + '...');
-    const importedData = JSON.parse(jsonText);
+    console.log('Parsing JSON...');
+    let importedData = JSON.parse(jsonText);
     
     console.log('Imported data:', importedData);
+    
+    // بررسی فرمت فشرده شده
+    if (importedData.v !== undefined && importedData.i) {
+      console.log('Compressed format detected');
+      
+      // تبدیل فشرده به فرمت عادی
+      const decompressed = {
+        version: importedData.v,
+        items: importedData.i.map(it => {
+          if (Array.isArray(it)) {
+            // فرمت خیلی فشرده: [name, sell]
+            return {
+              id: Date.now() + Math.random(),
+              name: it[0],
+              type: 'item',
+              unit: 'عدد',
+              buy: 0,
+              sell: it[1]
+            };
+          } else {
+            // فرمت نیمه فشرده
+            return {
+              id: it.id,
+              name: it.n,
+              type: it.t || 'item',
+              unit: it.u || 'عدد',
+              buy: it.b || 0,
+              sell: it.s || 0
+            };
+          }
+        })
+      };
+      importedData = decompressed;
+    }
     
     if (!importedData.items || importedData.items.length === 0) {
       toast('⚠️ هیچ آیتمی برای import نیست');
@@ -1468,6 +1525,10 @@ function importDataFromQR() {
       (async () => {
         try {
           for (const item of importedData.items) {
+            // اگه id نداره، ایجاد کن
+            if (!item.id) {
+              item.id = Date.now() + Math.random();
+            }
             await dbPut(STORES.items, item);
           }
           items = importedData.items;
