@@ -751,15 +751,15 @@ function showVoiceResult(originalText, confidence, parsedName, matchedItem, quan
   resultDiv.style.display = 'block';
 }
 
-function addLineFromVoice(name, qty, sell = 0, buy = 0) {
+function addLineFromVoice(name, qty, sell = 0, buy = 0, unit = 'عدد', type = 'item') {
   const newLine = {
     id: Date.now() + Math.random(),
     name: name,
     qty: qty || 1,
-    unit: 'عدد',
+    unit: unit || 'عدد',
     sell: sell || 0,
     buy: buy || 0,
-    type: 'item'
+    type: type || 'item'
   };
   
   lines.push(newLine);
@@ -771,7 +771,7 @@ function addLineFromVoice(name, qty, sell = 0, buy = 0) {
 function showVoiceMenu() {
   // نمایش منو برای انتخاب دستی
   const menuHtml = items.map(item => `
-    <div class="list-item" onclick="addLineFromVoice('${item.name}', 1, ${item.sell}, ${item.buy}); document.getElementById('voiceResult').style.display='none'">
+    <div class="list-item" onclick="addLineFromVoice('${item.name}', 1, ${item.sell}, ${item.buy}, '${item.unit || 'عدد'}', '${item.type || 'item'}'); document.getElementById('voiceResult').style.display='none'">
       <div class="list-item-info">
         <div class="list-item-name">${item.name}</div>
         <div class="list-item-meta">
@@ -856,7 +856,14 @@ function addPendingVoiceItems() {
   const count = window.pendingVoiceItems.length;
   window.pendingVoiceItems.forEach(item => {
     const finalPrice = item.calculatedPrice || item.match.sell;
-    addLineFromVoice(item.match.name, item.quantity, finalPrice, item.match.buy);
+    addLineFromVoice(
+      item.match.name, 
+      item.quantity, 
+      finalPrice, 
+      item.match.buy,
+      item.unit,  // ✅ unit اضافه شد
+      item.match.type  // ✅ type اضافه شد
+    );
   });
   
   document.getElementById('voiceResult').style.display = 'none';
