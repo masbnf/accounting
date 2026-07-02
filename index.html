@@ -185,6 +185,7 @@ label{display:block;font-size:11px;color:#6b7a8d;margin-bottom:4px}
 <button class="btn btn-blue" onclick="uploadDataFromJSON()">📤 بارگذاری</button>
 </div>
 </div>
+</div>
 
 <!-- ===== ITEMS ===== -->
 <div id="sec-items" class="section">
@@ -268,6 +269,7 @@ label{display:block;font-size:11px;color:#6b7a8d;margin-bottom:4px}
 <div id="reportDaily"></div>
 <div id="reportMonthly" style="display:none"></div>
 </div>
+
 </div>
 
 <div class="toast" id="toast"></div>
@@ -1458,9 +1460,6 @@ function toggleCard(head){
   body.classList.toggle('open');
   head.querySelector('span:last-child').textContent=body.classList.contains('open')?'▲':'▼';
 }
-
-// ===== QR CODE DATA TRANSFER =====
-
 
 // ===== INIT =====
 initDB().then(() => {
