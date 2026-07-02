@@ -7,7 +7,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="کافه">
 <meta name="theme-color" content="#0f1117">
-<title> حسابداری ال کافه</title>
+<title>حسابداری کافه</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;800&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
@@ -92,6 +93,19 @@ label{display:block;font-size:11px;color:#6b7a8d;margin-bottom:4px}
 .ios-hint{background:#1a2c1a;border:1px solid #2a5c2a;border-radius:12px;padding:12px 14px;margin-bottom:12px;font-size:12px;color:#a0e0a0;line-height:1.7;display:none}
 .ios-hint.show{display:block}
 
+/* QR CODE STYLES */
+.qr-modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);display:none;align-items:center;justify-content:center;z-index:1000}
+.qr-modal.show{display:flex}
+.qr-content{background:#1a1f2e;border-radius:14px;padding:20px;text-align:center;max-width:400px;border:1px solid #2a3040;max-height:90vh;overflow-y:auto}
+.qr-title{font-size:14px;font-weight:700;color:#f0c060;margin-bottom:12px}
+.qr-box{background:#0f1117;padding:20px;border-radius:10px;display:inline-block;margin:15px 0}
+.qr-box canvas{max-width:100%}
+.qr-info{font-size:11px;color:#6b7a8d;margin:10px 0;line-height:1.6}
+.qr-buttons{display:flex;gap:8px;margin-top:15px}
+.qr-buttons button{flex:1;padding:10px;font-size:12px}
+.qr-close{position:absolute;top:20px;right:20px;background:none;border:none;color:#f0c060;font-size:24px;cursor:pointer}
+#qrTextData{width:100%;height:80px;padding:8px;background:#0f1117;border:1px solid #2a3040;border-radius:6px;color:#e8e0d0;font-size:10px;font-family:monospace;resize:none;direction:ltr}
+
 /* VOICE ===== */
 .voice-btn{position:relative;width:60px;height:60px;border-radius:50%;border:none;cursor:pointer;font-size:24px;transition:all .2s;display:flex;align-items:center;justify-content:center}
 .voice-btn.listening{animation:pulse 0.6s infinite;background:#c084fc;box-shadow:0 0 30px #c084fc66}
@@ -175,6 +189,16 @@ label{display:block;font-size:11px;color:#6b7a8d;margin-bottom:4px}
 <div class="stat-box"><div class="stat-label">درصد سود</div><div class="stat-value text-gold" id="totMargin">۰٪</div></div>
 </div>
 <button class="btn btn-gold btn-full" onclick="saveInvoice()">✅ ثبت فاکتور</button>
+</div>
+
+<!-- Data Transfer Section -->
+<div class="card" style="background:#1a2a1a;border-color:#2a5c2a;margin-top:20px">
+<div class="card-title" style="color:#4ade80">🔄 انتقال داده‌ها</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+<button class="btn btn-blue" onclick="exportDataAsQR()">📤 QR Export</button>
+<button class="btn btn-blue" onclick="importDataFromQR()">📥 QR Import</button>
+<button class="btn btn-ghost" onclick="downloadDataAsJSON()">💾 JSON دانلود</button>
+<button class="btn btn-ghost" onclick="uploadDataFromJSON()">📂 JSON بارگذاری</button>
 </div>
 </div>
 
@@ -263,6 +287,22 @@ label{display:block;font-size:11px;color:#6b7a8d;margin-bottom:4px}
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- QR Modal -->
+<div class="qr-modal" id="qrModal">
+  <button class="qr-close" onclick="document.getElementById('qrModal').classList.remove('show')">✕</button>
+  <div class="qr-content">
+    <div class="qr-title">📲 QR Code - انتقال داده‌ها</div>
+    <div class="qr-info">این QR رو با گوشی دوم scan کنید:</div>
+    <div class="qr-box" id="qrCodeContainer"></div>
+    <div class="qr-info">یا متن رو copy کنید و paste کنید</div>
+    <textarea id="qrTextData" readonly></textarea>
+    <div class="qr-buttons">
+      <button class="btn btn-blue btn-sm" onclick="copyQRText()">📋 Copy</button>
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('qrModal').classList.remove('show')">بستن</button>
+    </div>
+  </div>
+</div>
 
 <!-- VOICE MODAL -->
 <div class="voice-modal" id="voiceModal">
@@ -1310,6 +1350,234 @@ function toggleCard(head){
   const body=head.nextElementSibling;
   body.classList.toggle('open');
   head.querySelector('span:last-child').textContent=body.classList.contains('open')?'▲':'▼';
+}
+
+// ===== QR CODE DATA TRANSFER =====
+
+function exportDataAsQR() {
+  // دیتاهای تمام
+  const exportData = {
+    version: 1,
+    items: items,
+    invoices: invoices,
+    stock: stockItems,
+    timestamp: new Date().toISOString()
+  };
+  
+  const jsonData = JSON.stringify(exportData);
+  console.log('Export data size:', jsonData.length, 'bytes');
+  
+  if (jsonData.length > 2500) {
+    toast('⚠️ داده‌ها خیلی بزرگ! فقط آیتم‌ها صادر میشود');
+    const smallData = {
+      version: 1,
+      items: items,
+      timestamp: new Date().toISOString()
+    };
+    generateQRCode(JSON.stringify(smallData));
+  } else {
+    generateQRCode(jsonData);
+  }
+}
+
+function generateQRCode(data) {
+  const qrContainer = document.getElementById('qrCodeContainer');
+  qrContainer.innerHTML = '';
+  
+  const modal = document.getElementById('qrModal');
+  modal.classList.add('show');
+  
+  // ذخیره متن برای copy
+  document.getElementById('qrTextData').value = data;
+  
+  setTimeout(() => {
+    try {
+      new QRCode(document.getElementById('qrCodeContainer'), {
+        text: data,
+        width: 250,
+        height: 250,
+        colorDark: '#e8e0d0',
+        colorLight: '#0f1117'
+      });
+      console.log('QR Code generated');
+    } catch (e) {
+      console.error('QR Error:', e);
+      toast('⚠️ خطا در تولید QR');
+    }
+  }, 100);
+}
+
+function importDataFromQR() {
+  const jsonText = prompt('📋 QR متن یا JSON رو paste کن:');
+  if (!jsonText || jsonText.trim() === '') {
+    toast('⚠️ متنی وارد نشده');
+    return;
+  }
+  
+  try {
+    console.log('Parsing JSON:', jsonText.substring(0, 50) + '...');
+    const importedData = JSON.parse(jsonText);
+    
+    console.log('Imported data:', importedData);
+    
+    if (!importedData.items || importedData.items.length === 0) {
+      toast('⚠️ هیچ آیتمی برای import نیست');
+      return;
+    }
+    
+    if (!confirm(`${importedData.items.length} آیتم import شود?`)) {
+      return;
+    }
+    
+    // Import items
+    if (importedData.items && importedData.items.length > 0) {
+      (async () => {
+        try {
+          for (const item of importedData.items) {
+            await dbPut(STORES.items, item);
+          }
+          items = importedData.items;
+          toast(`✅ ${importedData.items.length} آیتم وارد شد!`);
+          renderItems();
+        } catch (e) {
+          console.error('DB error:', e);
+          toast('⚠️ خطا در ذخیره‌سازی');
+        }
+      })();
+    }
+    
+    // Import invoices (optional)
+    if (importedData.invoices && importedData.invoices.length > 0) {
+      (async () => {
+        for (const inv of importedData.invoices) {
+          await dbPut(STORES.invoices, inv);
+        }
+        invoices = importedData.invoices;
+      })();
+    }
+    
+    // Import stock (optional)
+    if (importedData.stock && importedData.stock.length > 0) {
+      (async () => {
+        for (const s of importedData.stock) {
+          await dbPut(STORES.stock, s);
+        }
+        stockItems = importedData.stock;
+      })();
+    }
+    
+  } catch (e) {
+    console.error('Import error:', e);
+    toast('⚠️ خطا: متن JSON نامعتبر است');
+    console.log('Failed to parse:', jsonText);
+  }
+}
+
+function downloadDataAsJSON() {
+  const exportData = {
+    version: 1,
+    items: items,
+    invoices: invoices,
+    stock: stockItems,
+    timestamp: new Date().toISOString()
+  };
+  
+  const jsonString = JSON.stringify(exportData, null, 2);
+  const blob = new Blob([jsonString], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `cafe-data-${new Date().toISOString().split('T')[0]}.json`;
+  link.click();
+  
+  URL.revokeObjectURL(url);
+  toast('✅ فایل دانلود شد');
+}
+
+function uploadDataFromJSON() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) {
+      toast('⚠️ فایلی انتخاب نشده');
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        console.log('Reading file...');
+        const importedData = JSON.parse(event.target.result);
+        
+        console.log('Imported data:', importedData);
+        
+        if (!importedData.items || importedData.items.length === 0) {
+          toast('⚠️ هیچ آیتمی در فایل نیست');
+          return;
+        }
+        
+        if (!confirm(`${importedData.items.length} آیتم از فایل import شود?`)) {
+          return;
+        }
+        
+        // Import items
+        if (importedData.items && importedData.items.length > 0) {
+          (async () => {
+            try {
+              for (const item of importedData.items) {
+                await dbPut(STORES.items, item);
+              }
+              items = importedData.items;
+              toast(`✅ ${importedData.items.length} آیتم وارد شد!`);
+              renderItems();
+            } catch (e) {
+              console.error('DB error:', e);
+              toast('⚠️ خطا در ذخیره‌سازی');
+            }
+          })();
+        }
+        
+        // Import invoices
+        if (importedData.invoices && importedData.invoices.length > 0) {
+          (async () => {
+            for (const inv of importedData.invoices) {
+              await dbPut(STORES.invoices, inv);
+            }
+            invoices = importedData.invoices;
+          })();
+        }
+        
+        // Import stock
+        if (importedData.stock && importedData.stock.length > 0) {
+          (async () => {
+            for (const s of importedData.stock) {
+              await dbPut(STORES.stock, s);
+            }
+            stockItems = importedData.stock;
+          })();
+        }
+        
+      } catch (e) {
+        console.error('Upload error:', e);
+        toast('⚠️ خطا در خواندن فایل JSON');
+      }
+    };
+    
+    reader.readAsText(file);
+  };
+  
+  input.click();
+}
+
+function copyQRText() {
+  const textarea = document.getElementById('qrTextData');
+  textarea.select();
+  document.execCommand('copy');
+  toast('✅ متن کپی شد');
 }
 
 // ===== INIT =====
