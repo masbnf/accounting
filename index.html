@@ -8,8 +8,6 @@
 <meta name="apple-mobile-web-app-title" content="کافه">
 <meta name="theme-color" content="#0f1117">
 <title>حسابداری کافه</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="https://unpkg.com/qrcode@latest/build/qrcode.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;800&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
@@ -93,19 +91,6 @@ label{display:block;font-size:11px;color:#6b7a8d;margin-bottom:4px}
 .toast.show{opacity:1}
 .ios-hint{background:#1a2c1a;border:1px solid #2a5c2a;border-radius:12px;padding:12px 14px;margin-bottom:12px;font-size:12px;color:#a0e0a0;line-height:1.7;display:none}
 .ios-hint.show{display:block}
-
-/* QR CODE STYLES */
-.qr-modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);display:none;align-items:center;justify-content:center;z-index:1000}
-.qr-modal.show{display:flex}
-.qr-content{background:#1a1f2e;border-radius:14px;padding:20px;text-align:center;max-width:400px;border:1px solid #2a3040;max-height:90vh;overflow-y:auto}
-.qr-title{font-size:14px;font-weight:700;color:#f0c060;margin-bottom:12px}
-.qr-box{background:#0f1117;padding:20px;border-radius:10px;display:inline-block;margin:15px 0}
-.qr-box canvas{max-width:100%}
-.qr-info{font-size:11px;color:#6b7a8d;margin:10px 0;line-height:1.6}
-.qr-buttons{display:flex;gap:8px;margin-top:15px}
-.qr-buttons button{flex:1;padding:10px;font-size:12px}
-.qr-close{position:absolute;top:20px;right:20px;background:none;border:none;color:#f0c060;font-size:24px;cursor:pointer}
-#qrTextData{width:100%;height:80px;padding:8px;background:#0f1117;border:1px solid #2a3040;border-radius:6px;color:#e8e0d0;font-size:10px;font-family:monospace;resize:none;direction:ltr}
 
 /* VOICE ===== */
 .voice-btn{position:relative;width:60px;height:60px;border-radius:50%;border:none;cursor:pointer;font-size:24px;transition:all .2s;display:flex;align-items:center;justify-content:center}
@@ -192,14 +177,12 @@ label{display:block;font-size:11px;color:#6b7a8d;margin-bottom:4px}
 <button class="btn btn-gold btn-full" onclick="saveInvoice()">✅ ثبت فاکتور</button>
 </div>
 
-<!-- Data Transfer Section -->
+<!-- Data Transfer Section - JSON Only -->
 <div class="card" style="background:#1a2a1a;border-color:#2a5c2a;margin-top:20px">
-<div class="card-title" style="color:#4ade80">🔄 انتقال داده‌ها</div>
+<div class="card-title" style="color:#4ade80">💾 انتقال داده‌ها</div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-<button class="btn btn-blue" onclick="exportDataAsQR()">📤 QR Export</button>
-<button class="btn btn-blue" onclick="importDataFromQR()">📥 QR Import</button>
-<button class="btn btn-ghost" onclick="downloadDataAsJSON()">💾 JSON دانلود</button>
-<button class="btn btn-ghost" onclick="uploadDataFromJSON()">📂 JSON بارگذاری</button>
+<button class="btn btn-blue" onclick="downloadDataAsJSON()">📥 دانلود</button>
+<button class="btn btn-blue" onclick="uploadDataFromJSON()">📤 بارگذاری</button>
 </div>
 </div>
 
@@ -288,22 +271,6 @@ label{display:block;font-size:11px;color:#6b7a8d;margin-bottom:4px}
 </div>
 
 <div class="toast" id="toast"></div>
-
-<!-- QR Modal -->
-<div class="qr-modal" id="qrModal">
-  <button class="qr-close" onclick="document.getElementById('qrModal').classList.remove('show')">✕</button>
-  <div class="qr-content">
-    <div class="qr-title">📲 QR Code - انتقال داده‌ها</div>
-    <div class="qr-info">این QR رو با گوشی دوم scan کنید:</div>
-    <div class="qr-box" id="qrCodeContainer"></div>
-    <div class="qr-info">یا متن رو copy کنید و paste کنید</div>
-    <textarea id="qrTextData" readonly></textarea>
-    <div class="qr-buttons">
-      <button class="btn btn-blue btn-sm" onclick="copyQRText()">📋 Copy</button>
-      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('qrModal').classList.remove('show')">بستن</button>
-    </div>
-  </div>
-</div>
 
 <!-- VOICE MODAL -->
 <div class="voice-modal" id="voiceModal">
@@ -569,7 +536,6 @@ function cancelVoice() {
 function handleVoiceResult(transcript, confidence) {
   console.log('Voice input:', transcript, 'Confidence:', confidence);
   
-  // پردازش متن
   const text = transcript.trim();
   
   // الگوی اعداد فارسی (حرفی)
@@ -577,7 +543,10 @@ function handleVoiceResult(transcript, confidence) {
     'صفر': 0, 'یک': 1, 'دو': 2, 'سه': 3, 'چهار': 4, 'پنج': 5,
     'شش': 6, 'هفت': 7, 'هشت': 8, 'نه': 9, 'ده': 10,
     'یازده': 11, 'دوازده': 12, 'سیزده': 13, 'چهارده': 14, 'پانزده': 15,
-    'شانزده': 16, 'هفده': 17, 'هجده': 18, 'نوزده': 19, 'بیست': 20
+    'شانزده': 16, 'هفده': 17, 'هجده': 18, 'نوزده': 19, 'بیست': 20,
+    'سی': 30, 'چهل': 40, 'پنجاه': 50, 'شصت': 60, 'هفتاد': 70, 'هشتاد': 80, 'نود': 90,
+    'صد': 100, 'یکصد': 100, 'دویست': 200, 'سیصد': 300, 'چهارصد': 400, 'پانصد': 500,
+    'ششصد': 600, 'هفتصد': 700, 'هشتصد': 800, 'نهصد': 900
   };
   
   // الگوی اعداد فارسی (عددی)
@@ -602,6 +571,7 @@ function handleVoiceResult(transcript, confidence) {
   for (const sentence of sentences) {
     let itemName = '';
     let quantity = 1;
+    let unit = 'عدد';
     
     const trimmedSentence = sentence.trim();
     if (!trimmedSentence) continue;
@@ -615,35 +585,64 @@ function handleVoiceResult(transcript, confidence) {
     if (match) {
       quantity = parseInt(match[1]);
       itemName = match[2].trim();
-      console.log('Pattern 1 (numeric): qty=' + quantity + ', name=' + itemName);
+      unit = 'عدد';
+      console.log('Pattern 1 (numeric تا): qty=' + quantity + ', name=' + itemName);
     } else {
-      // الگو ۲: "X تا نام محصول" - با فاصله‌های اضافی
-      taPattern = /^(\d+)\s+[تت]?ا\s+(.+)$/i;
-      match = trimmedSentence.match(taPattern);
+      // الگو ۲: "X گرم/کیلو نام" یا "X [unit] نام"
+      const unitPattern = /^(\d+)\s+(گرم|کیلو|گرمی|کیلویی|g|kg|گ|ک)\s+(.+)$/i;
+      match = trimmedSentence.match(unitPattern);
       
       if (match) {
         quantity = parseInt(match[1]);
-        itemName = match[2].trim();
-        console.log('Pattern 2 (numeric alt): qty=' + quantity + ', name=' + itemName);
+        const unitStr = match[2].toLowerCase();
+        
+        // تشخیص واحد
+        if (unitStr === 'گرم' || unitStr === 'گرمی' || unitStr === 'g' || unitStr === 'گ') {
+          unit = 'گرم';
+        } else if (unitStr === 'کیلو' || unitStr === 'کیلویی' || unitStr === 'kg' || unitStr === 'ک') {
+          unit = 'کیلوگرم';
+        }
+        
+        itemName = match[3].trim();
+        console.log('Pattern 2 (X unit name): qty=' + quantity + ', unit=' + unit + ', name=' + itemName);
       } else {
-        // الگو ۳: اعداد فارسی حرفی
-        taPattern = /^(\S+)\s+[تت]?ا\s+(.+)$/i;
+        // الگو ۳: "X تا نام محصول" - با اعداد فارسی حرفی
+        taPattern = /^(\S+)\s+تا\s+(.+)$/i;
         match = trimmedSentence.match(taPattern);
         
         if (match && persianWordNumbers[match[1].toLowerCase()]) {
           quantity = persianWordNumbers[match[1].toLowerCase()];
           itemName = match[2].trim();
-          console.log('Pattern 3 (Persian word): qty=' + quantity + ', name=' + itemName);
+          unit = 'عدد';
+          console.log('Pattern 3 (Persian word تا): qty=' + quantity + ', name=' + itemName);
         } else {
-          // الگو ۴: فقط اسم (بدون تعداد)
-          itemName = trimmedSentence;
-          console.log('Pattern 4 (name only): qty=1, name=' + itemName);
+          // الگو ۴: "عدد فارسی گرم/کیلو نام"
+          const persianUnitPattern = /^(\S+)\s+(گرم|کیلو|گرمی|کیلویی)\s+(.+)$/i;
+          match = trimmedSentence.match(persianUnitPattern);
+          
+          if (match && persianWordNumbers[match[1].toLowerCase()]) {
+            quantity = persianWordNumbers[match[1].toLowerCase()];
+            const unitStr = match[2].toLowerCase();
+            
+            if (unitStr === 'گرم' || unitStr === 'گرمی') {
+              unit = 'گرم';
+            } else if (unitStr === 'کیلو' || unitStr === 'کیلویی') {
+              unit = 'کیلوگرم';
+            }
+            
+            itemName = match[3].trim();
+            console.log('Pattern 4 (Persian word unit): qty=' + quantity + ', unit=' + unit + ', name=' + itemName);
+          } else {
+            // الگو ۵: فقط اسم (بدون تعداد)
+            itemName = trimmedSentence;
+            console.log('Pattern 5 (name only): qty=1, name=' + itemName);
+          }
         }
       }
     }
     
     if (itemName) {
-      console.log('Final parsed:', 'quantity=' + quantity, 'name=' + itemName);
+      console.log('Final parsed:', 'quantity=' + quantity, 'unit=' + unit, 'name=' + itemName);
       
       // جستجو fuzzy برای این آیتم
       let bestMatch = null;
@@ -661,11 +660,27 @@ function handleVoiceResult(transcript, confidence) {
       }
       
       if (bestMatch && bestScore >= 55) {
+        // محاسبه قیمت برای وزنی‌ها
+        let finalQty = quantity;
+        let finalPrice = bestMatch.sell;
+        
+        if (bestMatch.type === 'kilo' && unit === 'گرم') {
+          // تبدیل گرم به کیلو و محاسبه قیمت
+          const basePricePerKilo = bestMatch.sell;
+          finalQty = quantity / 1000; // تبدیل گرم به کیلو
+          finalPrice = Math.round((quantity / 1000) * basePricePerKilo);
+          
+          console.log(`Weight calculation: ${quantity}g = ${finalQty.toFixed(3)}kg × ${basePricePerKilo}t = ${finalPrice}t`);
+        }
+        
         parsedItems.push({
           match: bestMatch,
-          quantity: quantity,
+          quantity: finalQty,
+          originalQty: quantity,
+          unit: unit,
           score: bestScore,
-          originalName: itemName
+          originalName: itemName,
+          calculatedPrice: finalPrice
         });
       }
     }
@@ -780,14 +795,20 @@ function showVoiceMenu() {
 function showMultiVoiceResult(originalText, confidence, parsedItems) {
   const resultDiv = document.getElementById('voiceResult');
   
-  const itemsHtml = parsedItems.map(item => `
+  const itemsHtml = parsedItems.map(item => {
+    const displayQty = item.unit === 'گرم' ? `${toF(Math.round(item.originalQty))}g` : `${toF(item.quantity)} ${item.unit || 'عدد'}`;
+    const displayPrice = item.calculatedPrice || item.match.sell;
+    
+    return `
     <div style="background:#0f1117;border-radius:8px;padding:10px;margin-bottom:8px">
       <div style="font-weight:600;color:#e8e0d0">${item.match.name}</div>
-      <div style="font-size:11px;color:#6b7a8d;margin-top:3px">تعداد: ${item.quantity}</div>
-      <div style="font-size:11px;color:#60a5fa;margin-top:2px">قیمت: ${fmtP(item.match.sell)} ت</div>
+      <div style="font-size:11px;color:#6b7a8d;margin-top:3px">تعداد: ${displayQty}</div>
+      <div style="font-size:11px;color:#60a5fa;margin-top:2px">قیمت: ${fmtP(displayPrice)} ت</div>
       <div style="font-size:10px;color:#f0c060;margin-top:2px">تطابق: ${item.score}%</div>
+      ${item.unit === 'گرم' ? `<div style="font-size:10px;color:#a0e0a0;margin-top:2px">💧 محاسبه وزن: ${item.originalQty}g ÷ 1000 × قیمت</div>` : ''}
     </div>
-  `).join('');
+  `;
+  }).join('');
   
   resultDiv.innerHTML = `
     <div class="voice-result">
@@ -816,7 +837,7 @@ function showMultiVoiceResult(originalText, confidence, parsedItems) {
   // ذخیره آیتم‌ها
   window.pendingVoiceItems = parsedItems;
   
-  // Event listeners (بدون inline onclick!)
+  // Event listeners
   document.getElementById('voiceAddBtn').onclick = () => {
     addPendingVoiceItems();
   };
@@ -834,7 +855,8 @@ function addPendingVoiceItems() {
   
   const count = window.pendingVoiceItems.length;
   window.pendingVoiceItems.forEach(item => {
-    addLineFromVoice(item.match.name, item.quantity, item.match.sell, item.match.buy);
+    const finalPrice = item.calculatedPrice || item.match.sell;
+    addLineFromVoice(item.match.name, item.quantity, finalPrice, item.match.buy);
   });
   
   document.getElementById('voiceResult').style.display = 'none';
@@ -871,6 +893,83 @@ let stockItems=[];
 let lines=[];
 let editItemId=null,editStockId=null,itemFilter='all',itemSearch='';
 let bestScore = 0;
+
+// ===== DATA TRANSFER (JSON ONLY) =====
+
+function downloadDataAsJSON() {
+  const exportData = {
+    version: 1,
+    items: items,
+    invoices: invoices,
+    stock: stockItems,
+    timestamp: new Date().toISOString()
+  };
+  
+  const jsonString = JSON.stringify(exportData, null, 2);
+  const blob = new Blob([jsonString], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `cafe-data-${new Date().toISOString().split('T')[0]}.json`;
+  link.click();
+  
+  URL.revokeObjectURL(url);
+  toast('✅ فایل دانلود شد');
+}
+
+function uploadDataFromJSON() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) {
+      toast('⚠️ فایلی انتخاب نشده');
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const importedData = JSON.parse(event.target.result);
+        
+        if (!importedData.items || importedData.items.length === 0) {
+          toast('⚠️ هیچ آیتمی در فایل نیست');
+          return;
+        }
+        
+        if (!confirm(`${importedData.items.length} آیتم import شود?`)) {
+          return;
+        }
+        
+        (async () => {
+          try {
+            for (const item of importedData.items) {
+              if (!item.id) item.id = Date.now() + Math.random();
+              await dbPut(STORES.items, item);
+            }
+            items = importedData.items;
+            toast(`✅ ${importedData.items.length} آیتم وارد شد!`);
+            renderItems();
+          } catch (e) {
+            console.error('DB error:', e);
+            toast('⚠️ خطا در ذخیره‌سازی');
+          }
+        })();
+        
+      } catch (e) {
+        console.error('Upload error:', e);
+        toast('⚠️ خطا در خواندن فایل JSON');
+      }
+    };
+    
+    reader.readAsText(file);
+  };
+  
+  input.click();
+}
 
 // ===== INIT DATA =====
 async function loadAllData() {
@@ -1355,348 +1454,6 @@ function toggleCard(head){
 
 // ===== QR CODE DATA TRANSFER =====
 
-function exportDataAsQR() {
-  // دیتاهای تمام
-  const exportData = {
-    version: 1,
-    items: items,
-    invoices: invoices,
-    stock: stockItems,
-    timestamp: new Date().toISOString()
-  };
-  
-  const jsonData = JSON.stringify(exportData);
-  console.log('Export data size:', jsonData.length, 'bytes');
-  
-  // QR max size ~2953 bytes
-  // اگر بزرگ باشد، فقط آیتم‌ها صادر کن
-  if (jsonData.length > 2000) {
-    console.log('Data too large, exporting items only');
-    toast('⚠️ داده‌ها بزرگ است، فقط آیتم‌ها صادر میشود');
-    
-    const smallData = {
-      v: 1,  // نسخه
-      i: items.map(it => ({  // items (فشرده)
-        id: it.id,
-        n: it.name,
-        t: it.type,
-        u: it.unit,
-        b: it.buy,
-        s: it.sell
-      }))
-    };
-    
-    const compressedJson = JSON.stringify(smallData);
-    console.log('Compressed size:', compressedJson.length, 'bytes');
-    
-    if (compressedJson.length > 2000) {
-      // حتی فشرده شده هم بزرگ است، فقط نام و قیمت
-      const verySmall = {
-        v: 1,
-        i: items.map(it => [it.name, it.sell])  // فقط نام و قیمت فروش
-      };
-      generateQRCode(JSON.stringify(verySmall));
-    } else {
-      generateQRCode(compressedJson);
-    }
-  } else {
-    generateQRCode(jsonData);
-  }
-}
-
-function generateQRCode(data) {
-  const qrContainer = document.getElementById('qrCodeContainer');
-  if (!qrContainer) {
-    toast('⚠️ QR Container پیدا نشد');
-    return;
-  }
-  
-  qrContainer.innerHTML = '';
-  
-  const modal = document.getElementById('qrModal');
-  modal.classList.add('show');
-  
-  // ذخیره متن برای copy
-  const textArea = document.getElementById('qrTextData');
-  if (textArea) {
-    textArea.value = data;
-  }
-  
-  setTimeout(() => {
-    try {
-      // سعی کن از unpkg/qrcode استفاده کن (بهتر)
-      if (typeof QRCode !== 'undefined' && QRCode.toCanvas) {
-        console.log('Using unpkg QRCode library');
-        QRCode.toCanvas(qrContainer, data, {
-          errorCorrectionLevel: 'H',
-          type: 'image/png',
-          width: 250,
-          margin: 1,
-          color: {
-            dark: '#e8e0d0',
-            light: '#0f1117'
-          }
-        }, (error) => {
-          if (error) {
-            console.error('QRCode error:', error);
-            toast('⚠️ QR تولید نشد، از متن استفاده کن');
-            showQRAsText(data);
-          } else {
-            console.log('✅ QR generated with unpkg');
-            toast('✅ QR آماده است');
-          }
-        });
-      } 
-      // fallback: cdnjs library
-      else if (typeof QRCode !== 'undefined') {
-        console.log('Using cdnjs QRCode library');
-        qrContainer.innerHTML = '';
-        new QRCode(qrContainer, {
-          text: data,
-          width: 250,
-          height: 250,
-          colorDark: '#e8e0d0',
-          colorLight: '#0f1117',
-          correctLevel: QRCode.CorrectLevel.H
-        });
-        console.log('✅ QR generated with cdnjs');
-        toast('✅ QR آماده است');
-      }
-      // اگه هیچکدام نبود
-      else {
-        console.warn('No QRCode library available');
-        toast('⚠️ QRCode library بار نشده، از متن استفاده کن');
-        showQRAsText(data);
-      }
-      
-    } catch (e) {
-      console.error('❌ QR Error:', e);
-      toast('⚠️ QR تولید نشد، از متن استفاده کن');
-      showQRAsText(data);
-    }
-  }, 300);
-}
-
-function showQRAsText(data) {
-  const qrContainer = document.getElementById('qrCodeContainer');
-  qrContainer.innerHTML = `
-    <div style="background:#0f1117;border:1px solid #2a3040;border-radius:10px;padding:15px;max-height:250px;overflow-y:auto">
-      <div style="font-size:10px;color:#f0c060;margin-bottom:10px;font-weight:600">📋 QR بجای متن:</div>
-      <textarea style="width:100%;height:200px;padding:10px;background:#12161e;border:1px solid #1e2533;border-radius:6px;color:#e8e0d0;font-size:9px;font-family:monospace;resize:none;direction:ltr" readonly>${data}</textarea>
-    </div>
-  `;
-}
-
-function importDataFromQR() {
-  const jsonText = prompt('📋 QR متن یا JSON رو paste کن:');
-  if (!jsonText || jsonText.trim() === '') {
-    toast('⚠️ متنی وارد نشده');
-    return;
-  }
-  
-  try {
-    console.log('Parsing JSON...');
-    let importedData = JSON.parse(jsonText);
-    
-    console.log('Imported data:', importedData);
-    
-    // بررسی فرمت فشرده شده
-    if (importedData.v !== undefined && importedData.i) {
-      console.log('Compressed format detected');
-      
-      // تبدیل فشرده به فرمت عادی
-      const decompressed = {
-        version: importedData.v,
-        items: importedData.i.map(it => {
-          if (Array.isArray(it)) {
-            // فرمت خیلی فشرده: [name, sell]
-            return {
-              id: Date.now() + Math.random(),
-              name: it[0],
-              type: 'item',
-              unit: 'عدد',
-              buy: 0,
-              sell: it[1]
-            };
-          } else {
-            // فرمت نیمه فشرده
-            return {
-              id: it.id,
-              name: it.n,
-              type: it.t || 'item',
-              unit: it.u || 'عدد',
-              buy: it.b || 0,
-              sell: it.s || 0
-            };
-          }
-        })
-      };
-      importedData = decompressed;
-    }
-    
-    if (!importedData.items || importedData.items.length === 0) {
-      toast('⚠️ هیچ آیتمی برای import نیست');
-      return;
-    }
-    
-    if (!confirm(`${importedData.items.length} آیتم import شود?`)) {
-      return;
-    }
-    
-    // Import items
-    if (importedData.items && importedData.items.length > 0) {
-      (async () => {
-        try {
-          for (const item of importedData.items) {
-            // اگه id نداره، ایجاد کن
-            if (!item.id) {
-              item.id = Date.now() + Math.random();
-            }
-            await dbPut(STORES.items, item);
-          }
-          items = importedData.items;
-          toast(`✅ ${importedData.items.length} آیتم وارد شد!`);
-          renderItems();
-        } catch (e) {
-          console.error('DB error:', e);
-          toast('⚠️ خطا در ذخیره‌سازی');
-        }
-      })();
-    }
-    
-    // Import invoices (optional)
-    if (importedData.invoices && importedData.invoices.length > 0) {
-      (async () => {
-        for (const inv of importedData.invoices) {
-          await dbPut(STORES.invoices, inv);
-        }
-        invoices = importedData.invoices;
-      })();
-    }
-    
-    // Import stock (optional)
-    if (importedData.stock && importedData.stock.length > 0) {
-      (async () => {
-        for (const s of importedData.stock) {
-          await dbPut(STORES.stock, s);
-        }
-        stockItems = importedData.stock;
-      })();
-    }
-    
-  } catch (e) {
-    console.error('Import error:', e);
-    toast('⚠️ خطا: متن JSON نامعتبر است');
-    console.log('Failed to parse:', jsonText);
-  }
-}
-
-function downloadDataAsJSON() {
-  const exportData = {
-    version: 1,
-    items: items,
-    invoices: invoices,
-    stock: stockItems,
-    timestamp: new Date().toISOString()
-  };
-  
-  const jsonString = JSON.stringify(exportData, null, 2);
-  const blob = new Blob([jsonString], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `cafe-data-${new Date().toISOString().split('T')[0]}.json`;
-  link.click();
-  
-  URL.revokeObjectURL(url);
-  toast('✅ فایل دانلود شد');
-}
-
-function uploadDataFromJSON() {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = '.json';
-  
-  input.onchange = (e) => {
-    const file = e.target.files[0];
-    if (!file) {
-      toast('⚠️ فایلی انتخاب نشده');
-      return;
-    }
-    
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        console.log('Reading file...');
-        const importedData = JSON.parse(event.target.result);
-        
-        console.log('Imported data:', importedData);
-        
-        if (!importedData.items || importedData.items.length === 0) {
-          toast('⚠️ هیچ آیتمی در فایل نیست');
-          return;
-        }
-        
-        if (!confirm(`${importedData.items.length} آیتم از فایل import شود?`)) {
-          return;
-        }
-        
-        // Import items
-        if (importedData.items && importedData.items.length > 0) {
-          (async () => {
-            try {
-              for (const item of importedData.items) {
-                await dbPut(STORES.items, item);
-              }
-              items = importedData.items;
-              toast(`✅ ${importedData.items.length} آیتم وارد شد!`);
-              renderItems();
-            } catch (e) {
-              console.error('DB error:', e);
-              toast('⚠️ خطا در ذخیره‌سازی');
-            }
-          })();
-        }
-        
-        // Import invoices
-        if (importedData.invoices && importedData.invoices.length > 0) {
-          (async () => {
-            for (const inv of importedData.invoices) {
-              await dbPut(STORES.invoices, inv);
-            }
-            invoices = importedData.invoices;
-          })();
-        }
-        
-        // Import stock
-        if (importedData.stock && importedData.stock.length > 0) {
-          (async () => {
-            for (const s of importedData.stock) {
-              await dbPut(STORES.stock, s);
-            }
-            stockItems = importedData.stock;
-          })();
-        }
-        
-      } catch (e) {
-        console.error('Upload error:', e);
-        toast('⚠️ خطا در خواندن فایل JSON');
-      }
-    };
-    
-    reader.readAsText(file);
-  };
-  
-  input.click();
-}
-
-function copyQRText() {
-  const textarea = document.getElementById('qrTextData');
-  textarea.select();
-  document.execCommand('copy');
-  toast('✅ متن کپی شد');
-}
 
 // ===== INIT =====
 initDB().then(() => {
