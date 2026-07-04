@@ -282,9 +282,7 @@ label{display:block;font-size:11px;color:#6b7a8d;margin-bottom:4px}
 <div class="voice-modal" id="fbSettingsModal">
 <div class="voice-modal-content" style="max-width:340px;text-align:right">
 <div class="voice-modal-title">⚙️ تنظیمات یکپارچه‌سازی (سرور کافه)</div>
-<div class="voice-modal-text" style="text-align:right">
-آدرس Worker و رمز (Token) که موقع راه‌اندازی بک‌اند ساختی رو اینجا وارد کن. این تنظیمات فقط روی همین دستگاه ذخیره می‌شه و باید روی همه دستگاه‌ها یکسان وارد بشه تا دیتا یکپارچه بشه.
-</div>
+<div class="voice-modal-text" style="text-align:right" id="apiStatusText"></div>
 <div style="text-align:right;margin-bottom:8px">
 <label>آدرس Worker</label><input id="apiUrl" placeholder="https://cafe-backend.xxx.workers.dev">
 </div>
@@ -294,6 +292,9 @@ label{display:block;font-size:11px;color:#6b7a8d;margin-bottom:4px}
 <div class="voice-modal-buttons">
 <button class="btn btn-gold" onclick="saveApiConfig()">ذخیره و اتصال</button>
 <button class="btn btn-ghost" onclick="document.getElementById('fbSettingsModal').classList.remove('show')">بستن</button>
+</div>
+<div class="voice-modal-buttons" id="disconnectRow" style="margin-top:8px;display:none">
+<button class="btn btn-red btn-full" onclick="disconnectServer()">🔌 قطع اتصال و استفاده محلی</button>
 </div>
 </div>
 </div>
@@ -314,6 +315,9 @@ label{display:block;font-size:11px;color:#6b7a8d;margin-bottom:4px}
 
 <script>
 // ===== API SETUP (یکپارچه‌سازی بین دستگاه‌ها - Cloudflare Workers + D1) =====
+// دو حالت کاری:
+//  - 'server': وصل به Worker/D1 مشترک (همگام‌سازی بین دستگاه‌ها)
+//  - 'local' : بدون سرور؛ داده‌ها فقط روی همین دستگاه/مرورگر در localStorage ذخیره می‌شوند
 const STORES = {
   items: 'items',
   invoices: 'invoices',
@@ -321,7 +325,7 @@ const STORES = {
 };
 
 const POLL_INTERVAL_MS = 6000; // هر ۶ ثانیه یک‌بار بررسی تغییرات جدید
-let apiReady = false;
+let syncMode = 'local';
 let pollTimer = null;
 
 function setSyncStatus(state, text){
@@ -344,6 +348,17 @@ function showApiSettings(){
   const cfg = getStoredApiConfig() || {};
   document.getElementById('apiUrl').value = cfg.url || '';
   document.getElementById('apiToken').value = cfg.token || '';
+  const statusEl = document.getElementById('apiStatusText');
+  const discRow = document.getElementById('disconnectRow');
+  if(cfg.url){
+    statusEl.textContent = (syncMode === 'server'
+      ? '✅ الان به این سرور متصلی: '
+      : '⚠️ تنظیمات ذخیره شده ولی اتصال برقرار نیست: ') + cfg.url;
+    discRow.style.display = 'block';
+  } else {
+    statusEl.textContent = 'به هیچ سروری وصل نیستی؛ برنامه با اطلاعات محلی همین دستگاه کار می‌کند. برای همگام‌سازی بین دستگاه‌ها، آدرس Worker و Token رو وارد کن.';
+    discRow.style.display = 'none';
+  }
   document.getElementById('fbSettingsModal').classList.add('show');
 }
 
@@ -360,6 +375,14 @@ function saveApiConfig(){
   location.reload();
 }
 
+function disconnectServer(){
+  if(!confirm('اتصال به سرور مشترک قطع شود؟ بعد از این، برنامه فقط با اطلاعات محلی همین دستگاه کار می‌کند (و دیگر با دستگاه‌های دیگر همگام نمی‌شود) تا دوباره وصل کنی.')) return;
+  localStorage.removeItem('cafeApiConfig');
+  document.getElementById('fbSettingsModal').classList.remove('show');
+  toast('🔌 اتصال قطع شد - حالت محلی فعال شد');
+  location.reload();
+}
+
 async function apiRequest(path, options = {}){
   const cfg = getStoredApiConfig();
   if(!cfg) throw new Error('API not configured');
@@ -373,11 +396,65 @@ async function apiRequest(path, options = {}){
   return resp.json();
 }
 
+// ---- ذخیره‌سازی محلی (وقتی به سروری وصل نیستیم) ----
+function localGetAll(storeName){
+  try {
+    const raw = localStorage.getItem('cafeLocal_' + storeName);
+    return raw ? JSON.parse(raw) : [];
+  } catch(e){ return []; }
+}
+function localSaveAll(storeName, arr){
+  localStorage.setItem('cafeLocal_' + storeName, JSON.stringify(arr));
+}
+function localUpsert(storeName, data){
+  const arr = localGetAll(storeName);
+  const idx = arr.findIndex(x => String(x.id) === String(data.id));
+  if(idx >= 0) arr[idx] = data; else arr.push(data);
+  localSaveAll(storeName, arr);
+  return data.id;
+}
+function localRemove(storeName, id){
+  const arr = localGetAll(storeName).filter(x => String(x.id) !== String(id));
+  localSaveAll(storeName, arr);
+}
+
+const DEFAULT_ITEMS = [
+  {id:1,name:'اسپرسو',type:'item',unit:'عدد',buy:8000,sell:35000},
+  {id:2,name:'کاپوچینو',type:'item',unit:'عدد',buy:12000,sell:55000},
+  {id:3,name:'لاته',type:'item',unit:'عدد',buy:14000,sell:60000},
+  {id:4,name:'موکا',type:'item',unit:'عدد',buy:16000,sell:65000},
+  {id:5,name:'آمریکانو',type:'item',unit:'عدد',buy:9000,sell:40000},
+  {id:6,name:'فراپه',type:'item',unit:'عدد',buy:18000,sell:75000},
+  {id:7,name:'کیک شکلاتی',type:'item',unit:'عدد',buy:20000,sell:80000},
+  {id:8,name:'قهوه اتیوپی',type:'kilo',unit:'کیلوگرم',buy:450000,sell:750000},
+  {id:9,name:'قهوه برزیل',type:'kilo',unit:'کیلوگرم',buy:380000,sell:620000},
+  {id:10,name:'بلند قهوه',type:'kilo',unit:'گرم',buy:500,sell:900}
+];
+const DEFAULT_STOCK = [
+  {id:1,name:'پودر اسپرسو',unit:'کیلوگرم',qty:5,min:1,cost:850000},
+  {id:2,name:'شیر',unit:'لیتر',qty:12,min:5,cost:18000}
+];
+
+function loadLocalData(){
+  items = localGetAll(STORES.items);
+  stockItems = localGetAll(STORES.stock);
+  invoices = localGetAll(STORES.invoices);
+  if(items.length === 0){
+    localSaveAll(STORES.items, DEFAULT_ITEMS);
+    items = DEFAULT_ITEMS.slice();
+  }
+  if(stockItems.length === 0){
+    localSaveAll(STORES.stock, DEFAULT_STOCK);
+    stockItems = DEFAULT_STOCK.slice();
+  }
+}
+
 async function initApi(){
   const cfg = getStoredApiConfig();
   if(!cfg){
-    setSyncStatus('warn','بدون همگام‌سازی');
-    toast('⚠️ برای همگام‌سازی بین دستگاه‌ها، تنظیمات سرور را وارد کنید');
+    syncMode = 'local';
+    setSyncStatus('warn','حالت محلی (بدون همگام‌سازی)');
+    loadLocalData();
     renderLines();
     return;
   }
@@ -386,15 +463,17 @@ async function initApi(){
     items = await apiRequest('/api/items');
     stockItems = await apiRequest('/api/stock');
     invoices = await apiRequest('/api/invoices');
+    syncMode = 'server';
     await seedDefaultsIfEmpty();
-    apiReady = true;
     setSyncStatus('ok','همگام با سرور');
     renderLines();
     startPolling();
   } catch(e){
-    console.error('API init failed:', e);
-    setSyncStatus('err','خطای اتصال');
-    toast('⚠️ اتصال به سرور ناموفق بود - تنظیمات را بررسی کنید');
+    console.error('API init failed, falling back to local mode:', e);
+    syncMode = 'local';
+    setSyncStatus('err','بدون اتصال - حالت محلی');
+    toast('⚠️ اتصال به سرور ناموفق بود؛ فعلاً با اطلاعات محلی کار می‌کنی');
+    loadLocalData();
     renderLines();
   }
 }
@@ -402,28 +481,12 @@ async function initApi(){
 async function seedDefaultsIfEmpty(){
   try {
     if(items.length === 0){
-      const defaultItems = [
-        {id:1,name:'اسپرسو',type:'item',unit:'عدد',buy:8000,sell:35000},
-        {id:2,name:'کاپوچینو',type:'item',unit:'عدد',buy:12000,sell:55000},
-        {id:3,name:'لاته',type:'item',unit:'عدد',buy:14000,sell:60000},
-        {id:4,name:'موکا',type:'item',unit:'عدد',buy:16000,sell:65000},
-        {id:5,name:'آمریکانو',type:'item',unit:'عدد',buy:9000,sell:40000},
-        {id:6,name:'فراپه',type:'item',unit:'عدد',buy:18000,sell:75000},
-        {id:7,name:'کیک شکلاتی',type:'item',unit:'عدد',buy:20000,sell:80000},
-        {id:8,name:'قهوه اتیوپی',type:'kilo',unit:'کیلوگرم',buy:450000,sell:750000},
-        {id:9,name:'قهوه برزیل',type:'kilo',unit:'کیلوگرم',buy:380000,sell:620000},
-        {id:10,name:'بلند قهوه',type:'kilo',unit:'گرم',buy:500,sell:900}
-      ];
-      for(const it of defaultItems) await apiRequest('/api/items/'+it.id, {method:'PUT', body:JSON.stringify(it)});
-      items = defaultItems;
+      for(const it of DEFAULT_ITEMS) await apiRequest('/api/items/'+it.id, {method:'PUT', body:JSON.stringify(it)});
+      items = DEFAULT_ITEMS.slice();
     }
     if(stockItems.length === 0){
-      const defaultStock = [
-        {id:1,name:'پودر اسپرسو',unit:'کیلوگرم',qty:5,min:1,cost:850000},
-        {id:2,name:'شیر',unit:'لیتر',qty:12,min:5,cost:18000}
-      ];
-      for(const s of defaultStock) await apiRequest('/api/stock/'+s.id, {method:'PUT', body:JSON.stringify(s)});
-      stockItems = defaultStock;
+      for(const s of DEFAULT_STOCK) await apiRequest('/api/stock/'+s.id, {method:'PUT', body:JSON.stringify(s)});
+      stockItems = DEFAULT_STOCK.slice();
     }
   } catch(e){
     console.error('Seed error:', e);
@@ -435,12 +498,12 @@ function startPolling(){
   pollTimer = setInterval(pollForUpdates, POLL_INTERVAL_MS);
   // هم‌زمان با برگشتن تب/برنامه به فورگراند، فوری یک بار sync کن
   document.addEventListener('visibilitychange', () => {
-    if(document.visibilityState === 'visible' && apiReady) pollForUpdates();
+    if(document.visibilityState === 'visible' && syncMode === 'server') pollForUpdates();
   });
 }
 
 async function pollForUpdates(){
-  if(!apiReady) return;
+  if(syncMode !== 'server') return;
   try {
     const [newItems, newStock, newInvoices] = await Promise.all([
       apiRequest('/api/items'),
@@ -461,25 +524,29 @@ async function pollForUpdates(){
 }
 
 async function dbAdd(storeName, data) {
-  if(!apiReady) throw new Error('API not connected');
-  await apiRequest(`/api/${storeName}/${data.id}`, {method:'PUT', body:JSON.stringify(data)});
+  if(syncMode === 'server'){
+    await apiRequest(`/api/${storeName}/${data.id}`, {method:'PUT', body:JSON.stringify(data)});
+  } else {
+    localUpsert(storeName, data);
+  }
   return data.id;
 }
 
 async function dbPut(storeName, data) {
-  if(!apiReady) throw new Error('API not connected');
-  await apiRequest(`/api/${storeName}/${data.id}`, {method:'PUT', body:JSON.stringify(data)});
-  return data.id;
+  return dbAdd(storeName, data); // هم‌ارز: هر دو در واقع upsert هستند
 }
 
 async function dbDelete(storeName, id) {
-  if(!apiReady) throw new Error('API not connected');
-  await apiRequest(`/api/${storeName}/${id}`, {method:'DELETE'});
+  if(syncMode === 'server'){
+    await apiRequest(`/api/${storeName}/${id}`, {method:'DELETE'});
+  } else {
+    localRemove(storeName, id);
+  }
 }
 
 async function dbGetAll(storeName) {
-  if(!apiReady) return [];
-  return apiRequest(`/api/${storeName}`);
+  if(syncMode === 'server') return apiRequest(`/api/${storeName}`);
+  return localGetAll(storeName);
 }
 
 // ===== HELPERS =====
@@ -1542,7 +1609,7 @@ function toggleCard(head){
 
 // ===== INIT =====
 initApi();
-window.addEventListener('online', ()=> { setSyncStatus(apiReady?'ok':'warn', apiReady?'همگام با سرور':'بدون همگام‌سازی'); if(apiReady) pollForUpdates(); });
+window.addEventListener('online', ()=> { if(syncMode==='server'){ setSyncStatus('ok','همگام با سرور'); pollForUpdates(); } else { setSyncStatus('warn','حالت محلی (بدون همگام‌سازی)'); } });
 window.addEventListener('offline', ()=> setSyncStatus('warn','آفلاین (بعداً sync می‌شود)'));
 console.log('Voice Recognition Ready');
 </script>
