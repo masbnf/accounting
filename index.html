@@ -125,6 +125,10 @@ label{display:block;font-size:11px;color:#6b7a8d;margin-bottom:4px}
 <div class="header-sub">فروش · سود · انبار · گزارش</div>
 </div>
 <div class="header-date" id="todayDate"></div>
+<button id="syncStatus" onclick="showApiSettings()" style="background:#1e2533;border:none;color:#6b7a8d;font-size:11px;padding:3px 10px;border-radius:20px;cursor:pointer;display:flex;align-items:center;gap:4px">
+<span id="syncDot" style="width:7px;height:7px;border-radius:50%;background:#f0c060;display:inline-block"></span>
+<span id="syncText">در حال اتصال...</span>
+</button>
 </div>
 
 <div class="tabs">
@@ -274,6 +278,26 @@ label{display:block;font-size:11px;color:#6b7a8d;margin-bottom:4px}
 
 <div class="toast" id="toast"></div>
 
+<!-- API SETTINGS MODAL -->
+<div class="voice-modal" id="fbSettingsModal">
+<div class="voice-modal-content" style="max-width:340px;text-align:right">
+<div class="voice-modal-title">⚙️ تنظیمات یکپارچه‌سازی (سرور کافه)</div>
+<div class="voice-modal-text" style="text-align:right">
+آدرس Worker و رمز (Token) که موقع راه‌اندازی بک‌اند ساختی رو اینجا وارد کن. این تنظیمات فقط روی همین دستگاه ذخیره می‌شه و باید روی همه دستگاه‌ها یکسان وارد بشه تا دیتا یکپارچه بشه.
+</div>
+<div style="text-align:right;margin-bottom:8px">
+<label>آدرس Worker</label><input id="apiUrl" placeholder="https://cafe-backend.xxx.workers.dev">
+</div>
+<div style="text-align:right;margin-bottom:14px">
+<label>رمز (Token)</label><input id="apiToken" placeholder="همون رمزی که توی wrangler.toml گذاشتی">
+</div>
+<div class="voice-modal-buttons">
+<button class="btn btn-gold" onclick="saveApiConfig()">ذخیره و اتصال</button>
+<button class="btn btn-ghost" onclick="document.getElementById('fbSettingsModal').classList.remove('show')">بستن</button>
+</div>
+</div>
+</div>
+
 <!-- VOICE MODAL -->
 <div class="voice-modal" id="voiceModal">
 <div class="voice-modal-content">
@@ -289,93 +313,173 @@ label{display:block;font-size:11px;color:#6b7a8d;margin-bottom:4px}
 </div>
 
 <script>
-// ===== INDEXEDDB SETUP =====
-const DB_NAME = 'CafeAccounting';
-const DB_VERSION = 1;
+// ===== API SETUP (یکپارچه‌سازی بین دستگاه‌ها - Cloudflare Workers + D1) =====
 const STORES = {
   items: 'items',
   invoices: 'invoices',
   stock: 'stock'
 };
 
-let db = null;
+const POLL_INTERVAL_MS = 6000; // هر ۶ ثانیه یک‌بار بررسی تغییرات جدید
+let apiReady = false;
+let pollTimer = null;
 
-async function initDB() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, DB_VERSION);
-    
-    req.onerror = () => {
-      console.error('DB Error:', req.error);
-      reject(req.error);
-    };
-    
-    req.onsuccess = () => {
-      db = req.result;
-      console.log('DB Initialized');
-      loadAllData();
-      resolve(db);
-    };
-    
-    req.onupgradeneeded = (e) => {
-      const database = e.target.result;
-      
-      if (!database.objectStoreNames.contains(STORES.items)) {
-        const itemStore = database.createObjectStore(STORES.items, { keyPath: 'id' });
-        itemStore.createIndex('name', 'name', { unique: false });
-        itemStore.createIndex('type', 'type', { unique: false });
-      }
-      
-      if (!database.objectStoreNames.contains(STORES.invoices)) {
-        const invStore = database.createObjectStore(STORES.invoices, { keyPath: 'id' });
-        invStore.createIndex('date', 'date', { unique: false });
-      }
-      
-      if (!database.objectStoreNames.contains(STORES.stock)) {
-        const stockStore = database.createObjectStore(STORES.stock, { keyPath: 'id' });
-        stockStore.createIndex('name', 'name', { unique: false });
-      }
-    };
+function setSyncStatus(state, text){
+  const dot = document.getElementById('syncDot');
+  const txt = document.getElementById('syncText');
+  if(!dot||!txt) return;
+  const colors = {ok:'#4ade80', warn:'#f0c060', err:'#f87171'};
+  dot.style.background = colors[state] || '#6b7a8d';
+  txt.textContent = text;
+}
+
+function getStoredApiConfig(){
+  try {
+    const raw = localStorage.getItem('cafeApiConfig');
+    return raw ? JSON.parse(raw) : null;
+  } catch(e){ return null; }
+}
+
+function showApiSettings(){
+  const cfg = getStoredApiConfig() || {};
+  document.getElementById('apiUrl').value = cfg.url || '';
+  document.getElementById('apiToken').value = cfg.token || '';
+  document.getElementById('fbSettingsModal').classList.add('show');
+}
+
+function saveApiConfig(){
+  const url = document.getElementById('apiUrl').value.trim().replace(/\/$/,'');
+  const token = document.getElementById('apiToken').value.trim();
+  if(!url){
+    toast('⚠️ آدرس Worker لازمه');
+    return;
+  }
+  localStorage.setItem('cafeApiConfig', JSON.stringify({url, token}));
+  document.getElementById('fbSettingsModal').classList.remove('show');
+  toast('✅ ذخیره شد، در حال اتصال...');
+  location.reload();
+}
+
+async function apiRequest(path, options = {}){
+  const cfg = getStoredApiConfig();
+  if(!cfg) throw new Error('API not configured');
+  const headers = Object.assign({'Content-Type':'application/json'}, options.headers || {});
+  if(cfg.token) headers['X-Cafe-Token'] = cfg.token;
+  const resp = await fetch(cfg.url + path, Object.assign({}, options, {headers}));
+  if(!resp.ok){
+    const body = await resp.text().catch(()=> '');
+    throw new Error(`API ${resp.status}: ${body}`);
+  }
+  return resp.json();
+}
+
+async function initApi(){
+  const cfg = getStoredApiConfig();
+  if(!cfg){
+    setSyncStatus('warn','بدون همگام‌سازی');
+    toast('⚠️ برای همگام‌سازی بین دستگاه‌ها، تنظیمات سرور را وارد کنید');
+    renderLines();
+    return;
+  }
+  try {
+    setSyncStatus('warn','در حال اتصال...');
+    items = await apiRequest('/api/items');
+    stockItems = await apiRequest('/api/stock');
+    invoices = await apiRequest('/api/invoices');
+    await seedDefaultsIfEmpty();
+    apiReady = true;
+    setSyncStatus('ok','همگام با سرور');
+    renderLines();
+    startPolling();
+  } catch(e){
+    console.error('API init failed:', e);
+    setSyncStatus('err','خطای اتصال');
+    toast('⚠️ اتصال به سرور ناموفق بود - تنظیمات را بررسی کنید');
+    renderLines();
+  }
+}
+
+async function seedDefaultsIfEmpty(){
+  try {
+    if(items.length === 0){
+      const defaultItems = [
+        {id:1,name:'اسپرسو',type:'item',unit:'عدد',buy:8000,sell:35000},
+        {id:2,name:'کاپوچینو',type:'item',unit:'عدد',buy:12000,sell:55000},
+        {id:3,name:'لاته',type:'item',unit:'عدد',buy:14000,sell:60000},
+        {id:4,name:'موکا',type:'item',unit:'عدد',buy:16000,sell:65000},
+        {id:5,name:'آمریکانو',type:'item',unit:'عدد',buy:9000,sell:40000},
+        {id:6,name:'فراپه',type:'item',unit:'عدد',buy:18000,sell:75000},
+        {id:7,name:'کیک شکلاتی',type:'item',unit:'عدد',buy:20000,sell:80000},
+        {id:8,name:'قهوه اتیوپی',type:'kilo',unit:'کیلوگرم',buy:450000,sell:750000},
+        {id:9,name:'قهوه برزیل',type:'kilo',unit:'کیلوگرم',buy:380000,sell:620000},
+        {id:10,name:'بلند قهوه',type:'kilo',unit:'گرم',buy:500,sell:900}
+      ];
+      for(const it of defaultItems) await apiRequest('/api/items/'+it.id, {method:'PUT', body:JSON.stringify(it)});
+      items = defaultItems;
+    }
+    if(stockItems.length === 0){
+      const defaultStock = [
+        {id:1,name:'پودر اسپرسو',unit:'کیلوگرم',qty:5,min:1,cost:850000},
+        {id:2,name:'شیر',unit:'لیتر',qty:12,min:5,cost:18000}
+      ];
+      for(const s of defaultStock) await apiRequest('/api/stock/'+s.id, {method:'PUT', body:JSON.stringify(s)});
+      stockItems = defaultStock;
+    }
+  } catch(e){
+    console.error('Seed error:', e);
+  }
+}
+
+function startPolling(){
+  if(pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(pollForUpdates, POLL_INTERVAL_MS);
+  // هم‌زمان با برگشتن تب/برنامه به فورگراند، فوری یک بار sync کن
+  document.addEventListener('visibilitychange', () => {
+    if(document.visibilityState === 'visible' && apiReady) pollForUpdates();
   });
+}
+
+async function pollForUpdates(){
+  if(!apiReady) return;
+  try {
+    const [newItems, newStock, newInvoices] = await Promise.all([
+      apiRequest('/api/items'),
+      apiRequest('/api/stock'),
+      apiRequest('/api/invoices')
+    ]);
+    items = newItems;
+    stockItems = newStock;
+    invoices = newInvoices.sort((a,b)=>b.id-a.id);
+    if(document.getElementById('sec-items').classList.contains('active')) renderItems();
+    if(document.getElementById('sec-stock').classList.contains('active')) renderStock();
+    if(document.getElementById('sec-reports').classList.contains('active')) renderReports();
+    setSyncStatus('ok','همگام با سرور');
+  } catch(e){
+    console.error('Poll error:', e);
+    setSyncStatus('err','خطای همگام‌سازی');
+  }
 }
 
 async function dbAdd(storeName, data) {
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction([storeName], 'readwrite');
-    const store = tx.objectStore(storeName);
-    const req = store.add(data);
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
+  if(!apiReady) throw new Error('API not connected');
+  await apiRequest(`/api/${storeName}/${data.id}`, {method:'PUT', body:JSON.stringify(data)});
+  return data.id;
 }
 
 async function dbPut(storeName, data) {
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction([storeName], 'readwrite');
-    const store = tx.objectStore(storeName);
-    const req = store.put(data);
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
+  if(!apiReady) throw new Error('API not connected');
+  await apiRequest(`/api/${storeName}/${data.id}`, {method:'PUT', body:JSON.stringify(data)});
+  return data.id;
 }
 
 async function dbDelete(storeName, id) {
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction([storeName], 'readwrite');
-    const store = tx.objectStore(storeName);
-    const req = store.delete(id);
-    req.onsuccess = () => resolve();
-    req.onerror = () => reject(req.error);
-  });
+  if(!apiReady) throw new Error('API not connected');
+  await apiRequest(`/api/${storeName}/${id}`, {method:'DELETE'});
 }
 
 async function dbGetAll(storeName) {
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction([storeName], 'readonly');
-    const store = tx.objectStore(storeName);
-    const req = store.getAll();
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
+  if(!apiReady) return [];
+  return apiRequest(`/api/${storeName}`);
 }
 
 // ===== HELPERS =====
@@ -996,49 +1100,8 @@ function uploadDataFromJSON() {
   input.click();
 }
 
-// ===== INIT DATA =====
-async function loadAllData() {
-  try {
-    items = await dbGetAll(STORES.items);
-    invoices = await dbGetAll(STORES.invoices);
-    stockItems = await dbGetAll(STORES.stock);
-    
-    if (items.length === 0) {
-      const defaultItems = [
-        {id:1,name:'اسپرسو',type:'item',unit:'عدد',buy:8000,sell:35000},
-        {id:2,name:'کاپوچینو',type:'item',unit:'عدد',buy:12000,sell:55000},
-        {id:3,name:'لاته',type:'item',unit:'عدد',buy:14000,sell:60000},
-        {id:4,name:'موکا',type:'item',unit:'عدد',buy:16000,sell:65000},
-        {id:5,name:'آمریکانو',type:'item',unit:'عدد',buy:9000,sell:40000},
-        {id:6,name:'فراپه',type:'item',unit:'عدد',buy:18000,sell:75000},
-        {id:7,name:'کیک شکلاتی',type:'item',unit:'عدد',buy:20000,sell:80000},
-        {id:8,name:'قهوه اتیوپی',type:'kilo',unit:'کیلوگرم',buy:450000,sell:750000},
-        {id:9,name:'قهوه برزیل',type:'kilo',unit:'کیلوگرم',buy:380000,sell:620000},
-        {id:10,name:'بلند قهوه',type:'kilo',unit:'گرم',buy:500,sell:900}
-      ];
-      for (const item of defaultItems) {
-        await dbAdd(STORES.items, item);
-      }
-      items = defaultItems;
-    }
-    
-    if (stockItems.length === 0) {
-      const defaultStock = [
-        {id:1,name:'پودر اسپرسو',unit:'کیلوگرم',qty:5,min:1,cost:850000},
-        {id:2,name:'شیر',unit:'لیتر',qty:12,min:5,cost:18000}
-      ];
-      for (const stock of defaultStock) {
-        await dbAdd(STORES.stock, stock);
-      }
-      stockItems = defaultStock;
-    }
-    
-    console.log('Data loaded:', {items: items.length, invoices: invoices.length, stock: stockItems.length});
-  } catch (e) {
-    console.error('Load error:', e);
-    toast('⚠️ خطا در بارگذاری داده‌ها');
-  }
-}
+// داده‌ها اکنون از طریق Worker API بارگذاری و هر چند ثانیه یک‌بار Polling می‌شوند
+// (به initApi و seedDefaultsIfEmpty در بالای فایل مراجعه کنید)
 
 // ===== DATE =====
 document.getElementById('todayDate').textContent=toF(new Date().toLocaleDateString('fa-IR'));
@@ -1155,7 +1218,7 @@ async function saveInvoice(){
       lines:JSON.parse(JSON.stringify(lines)),
       rev,cost,profit,margin
     });
-    invoices.unshift({id:Date.now(),date:todayKey(),customer:document.getElementById('custName').value||'بدون نام',lines:JSON.parse(JSON.stringify(lines)),rev,cost,profit,margin});
+    // آرایه invoices در Poll بعدی (حداکثر ۶ ثانیه دیگر) به‌روزرسانی می‌شود
     document.getElementById('custName').value='';
     lines=[];
     renderLines();
@@ -1478,13 +1541,10 @@ function toggleCard(head){
 }
 
 // ===== INIT =====
-initDB().then(() => {
-  renderLines();
-  console.log('Voice Recognition Ready');
-}).catch(e => {
-  console.error('DB init failed:', e);
-  toast('⚠️ خطا در راه‌اندازی پایگاه داده');
-});
+initApi();
+window.addEventListener('online', ()=> { setSyncStatus(apiReady?'ok':'warn', apiReady?'همگام با سرور':'بدون همگام‌سازی'); if(apiReady) pollForUpdates(); });
+window.addEventListener('offline', ()=> setSyncStatus('warn','آفلاین (بعداً sync می‌شود)'));
+console.log('Voice Recognition Ready');
 </script>
 </body>
 </html>
